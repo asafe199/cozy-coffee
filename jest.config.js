@@ -8,7 +8,7 @@ module.exports = {
     },
     {
       displayName: 'react-tests',
-      testMatch: ['<rootDir>/**/*.test.ts', '<rootDir>/**/*.test.tsx', '!<rootDir>/src/state/gameStore.test.ts'],
+      testMatch: ['<rootDir>/**/*.test.tsx'],
       preset: 'jest-expo',
       setupFiles: ['./jest.setup.js'],
     },
