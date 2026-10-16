@@ -9,6 +9,7 @@ interface GameState {
   pendingScene: SceneId | null;
   currentOrder: Order | null;
   reviews: ReviewResult[];
+  pendingPrep: CoffeePrep | null;
 }
 
 interface GameActions {
@@ -16,6 +17,7 @@ interface GameActions {
   startTransition: (target: SceneId) => void;
   completeTransition: () => void;
   deliverOrder: (prep: CoffeePrep | null) => void;
+  setPendingPrep: (prep: CoffeePrep | null) => void;
 }
 
 type GameStore = GameState & GameActions;
@@ -27,6 +29,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingScene: null,
   currentOrder: null,
   reviews: [],
+  pendingPrep: null,
 
   // Actions
   requestNextOrder: () => {
@@ -67,5 +70,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reviews: [...state.reviews, review],
       currentOrder: null,
     } as Partial<GameStore>);
+  },
+
+  setPendingPrep: (prep: CoffeePrep | null) => {
+    set({ pendingPrep: prep } as Partial<GameStore>);
   },
 }));
