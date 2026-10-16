@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { useSharedValue, withSpring } from 'react-native-reanimated';
 import { MACHINE_ZONE, SUGAR_ZONE, resolveDropZone } from './dropZones';
+import { computeSwayAngle } from '../shared/dragSway';
 
 const CUP_ORIGIN = { x: 0, z: 0 };
 const CUP_Y = 0.05;
@@ -50,6 +51,11 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const posX = useSharedValue(CUP_ORIGIN.x);
   const posZ = useSharedValue(CUP_ORIGIN.z);
+  const rotZ = useSharedValue(0);
+  // Previous frame's posX while dragging, used only to diff a per-frame velocity for sway
+  // (Task 9). Reset to null whenever dragging stops so the position spring-back's own
+  // velocity is never mistaken for drag velocity.
+  const prevDragX = useRef<number | null>(null);
   const isDragging = useRef(false);
   // The capture target/pointerId recorded at pointerdown time, when event.target is
   // unambiguously scoped to the cup. onPointerUp can fire with event.target scoped to
@@ -72,6 +78,10 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
     capturedTarget.current?.releasePointerCapture(trackedPointerId.current ?? -1);
     capturedTarget.current = null;
     trackedPointerId.current = null;
+    // Settle the sway back to level immediately on release, independent of the position
+    // spring-back below — without this, diffing the spring-back's own motion next frame
+    // would read as drag velocity and keep the cup swaying instead of leveling out.
+    rotZ.value = withSpring(0);
     if (zone) {
       posX.value = withSpring(zone.x);
       posZ.value = withSpring(zone.z);
@@ -123,12 +133,27 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
     finalize(resolveDropZone({ x: posX.value, z: posZ.value }, [MACHINE_ZONE, SUGAR_ZONE]));
   };
 
-  useFrame(() => {
+  useFrame((_state, delta) => {
     if (!meshRef.current) {
       return;
     }
     meshRef.current.position.x = posX.value;
     meshRef.current.position.z = posZ.value;
+
+    // Pendulum sway (Task 9): a pure per-frame diff of position over elapsed time, not
+    // anything that infers intent from a lack of events (see the lostpointercapture history
+    // above for why timing-based "idle" guesses are off the table here). Only computed while
+    // actively dragging — once released, finalize() above drives rotZ back to 0 directly, so
+    // the position spring-back's own velocity is never fed into this as if it were a drag.
+    if (isDragging.current) {
+      const velocityX =
+        prevDragX.current !== null && delta > 0 ? (posX.value - prevDragX.current) / delta : 0;
+      rotZ.value = withSpring(computeSwayAngle(velocityX));
+      prevDragX.current = posX.value;
+    } else {
+      prevDragX.current = null;
+    }
+    meshRef.current.rotation.z = rotZ.value;
   });
 
   return (
