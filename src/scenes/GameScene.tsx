@@ -20,6 +20,8 @@ export function GameScene() {
 
   return (
     <Canvas>
+      {/* Carvão — Direction A's designated scene background. */}
+      <color attach="background" args={['#2B2729']} />
       <hemisphereLight args={[0xfff1d6, 0x4a3420, 0.6]} />
       <directionalLight color={0xffdca0} intensity={1.3} position={[5, 7, 4]} />
       {scene === 'orderBoard' && <OrderBoard />}
