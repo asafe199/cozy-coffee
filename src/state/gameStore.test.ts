@@ -1,5 +1,6 @@
 import { useGameStore } from './gameStore';
 import { Order } from '../game/types';
+import { initialClock, ORDERS_PER_SHIFT } from '../game/shift';
 
 const initialStateValues = {
   scene: 'orderBoard' as const,
@@ -9,6 +10,12 @@ const initialStateValues = {
   reviews: [],
   itemIndex: 0,
   preps: [],
+  day: 1,
+  clock: initialClock(),
+  dayOver: false,
+  dayEarnings: 0,
+  dayReviews: [],
+  money: 0,
 };
 
 const comboOrder: Order = {
@@ -117,4 +124,48 @@ test('requestNextOrder resets item progress', () => {
   const s = useGameStore.getState();
   expect(s.itemIndex).toBe(0);
   expect(s.preps).toEqual([]);
+});
+
+function serveOrders(count: number) {
+  for (let i = 0; i < count; i++) {
+    useGameStore.setState({ currentOrder: coffeeOnly, itemIndex: 0, preps: [] });
+    useGameStore.getState().deliverOrder();
+  }
+}
+
+test('delivering earns money and advances the clock', () => {
+  serveOrders(1);
+  const s = useGameStore.getState();
+  expect(s.money).toBe(3);
+  expect(s.dayEarnings).toBe(3);
+  expect(s.clock.ordersServed).toBe(1);
+  expect(s.dayReviews).toHaveLength(1);
+  expect(s.dayOver).toBe(false);
+});
+
+test('serving a full day (two shifts) ends the day', () => {
+  serveOrders(ORDERS_PER_SHIFT);
+  expect(useGameStore.getState().clock.shift).toBe('afternoon');
+  expect(useGameStore.getState().dayOver).toBe(false);
+  serveOrders(ORDERS_PER_SHIFT);
+  expect(useGameStore.getState().dayOver).toBe(true);
+});
+
+test('startNextDay resets the day but keeps money and lifetime reviews', () => {
+  serveOrders(ORDERS_PER_SHIFT * 2);
+  const before = useGameStore.getState();
+  useGameStore.getState().startNextDay();
+  const s = useGameStore.getState();
+  expect(s.day).toBe(2);
+  expect(s.dayOver).toBe(false);
+  expect(s.dayEarnings).toBe(0);
+  expect(s.dayReviews).toEqual([]);
+  expect(s.clock.shift).toBe('morning');
+  expect(s.money).toBe(before.money);
+  expect(s.reviews).toHaveLength(before.reviews.length);
+});
+
+test('startNextDay is a no-op while the day is still running', () => {
+  useGameStore.getState().startNextDay();
+  expect(useGameStore.getState().day).toBe(1);
 });

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { SceneId, Order, ItemPrep, ReviewResult } from '../game/types';
 import { generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
+import { Clock, advanceClock, initialClock } from '../game/shift';
+import { orderValue } from '../game/menu';
 
 interface GameState {
   scene: SceneId;
@@ -11,6 +13,12 @@ interface GameState {
   reviews: ReviewResult[];
   itemIndex: number;
   preps: (ItemPrep | null)[];
+  day: number;
+  clock: Clock;
+  dayOver: boolean;
+  dayEarnings: number;
+  dayReviews: ReviewResult[];
+  money: number;
 }
 
 interface GameActions {
@@ -22,6 +30,7 @@ interface GameActions {
   /** Records the current item's prep and returns the next scene to visit. */
   completeItem: (prep: ItemPrep | null) => SceneId;
   deliverOrder: () => void;
+  startNextDay: () => void;
 }
 
 type GameStore = GameState & GameActions;
@@ -35,6 +44,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   reviews: [],
   itemIndex: 0,
   preps: [],
+  day: 1,
+  clock: initialClock(),
+  dayOver: false,
+  dayEarnings: 0,
+  dayReviews: [],
+  money: 0,
 
   // Actions
   requestNextOrder: () => {
@@ -95,11 +110,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return; // no-op if there's no order to deliver
     }
     const review = calculateReview(state.currentOrder, state.preps);
+    const earned = orderValue(state.currentOrder);
+    const { clock, dayEnded } = advanceClock(state.clock);
     set({
       reviews: [...state.reviews, review],
+      dayReviews: [...state.dayReviews, review],
+      dayEarnings: state.dayEarnings + earned,
+      money: state.money + earned,
+      clock,
+      dayOver: dayEnded,
       currentOrder: null,
       itemIndex: 0,
       preps: [],
+    } as Partial<GameStore>);
+  },
+
+  startNextDay: () => {
+    if (!get().dayOver) {
+      return;
+    }
+    set({
+      day: get().day + 1,
+      clock: initialClock(),
+      dayOver: false,
+      dayEarnings: 0,
+      dayReviews: [],
     } as Partial<GameStore>);
   },
 }));

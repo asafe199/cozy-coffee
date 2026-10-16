@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { GameScene } from '../scenes/GameScene';
 import { FadeTransition } from '../scenes/FadeTransition/FadeTransition';
 import { useGameStore } from '../state/gameStore';
+import { formatClock } from '../game/shift';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
@@ -21,6 +22,16 @@ export function GameScreen() {
   const lastStars = reviews[reviews.length - 1]?.stars;
   const scene = useGameStore((state) => state.scene);
   const currentOrder = useGameStore((state) => state.currentOrder);
+  const clock = useGameStore((state) => state.clock);
+  const day = useGameStore((state) => state.day);
+  const dayOver = useGameStore((state) => state.dayOver);
+  const dayEarnings = useGameStore((state) => state.dayEarnings);
+  const dayReviews = useGameStore((state) => state.dayReviews);
+  const startNextDay = useGameStore((state) => state.startNextDay);
+
+  const averageStars = dayReviews.length
+    ? (dayReviews.reduce((sum, r) => sum + r.stars, 0) / dayReviews.length).toFixed(1)
+    : '–';
 
   const orderLabel = currentOrder
     ? currentOrder.items
@@ -46,6 +57,27 @@ export function GameScreen() {
       {scene === 'orderBoard' && (
         <View style={styles.orderLabel} pointerEvents="none">
           {fontsLoaded && <Text style={styles.orderLabelText}>{orderLabel}</Text>}
+        </View>
+      )}
+      <View style={styles.clock} pointerEvents="none">
+        {fontsLoaded && (
+          <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
+        )}
+      </View>
+      {dayOver && (
+        <View style={styles.summaryBackdrop}>
+          <View style={styles.summaryCard}>
+            {fontsLoaded && (
+              <>
+                <Text style={styles.summaryTitle}>{`Day ${day} closed`}</Text>
+                <Text style={styles.hudText}>{`Earned: $${dayEarnings}`}</Text>
+                <Text style={styles.hudText}>{`Reviews: ${dayReviews.length} · avg ${averageStars}★`}</Text>
+                <Pressable style={styles.summaryButton} onPress={startNextDay}>
+                  <Text style={styles.summaryButtonText}>Open next day</Text>
+                </Pressable>
+              </>
+            )}
+          </View>
         </View>
       )}
     </View>
@@ -81,6 +113,45 @@ const styles = StyleSheet.create({
   },
   orderLabelText: {
     color: CREME,
+    fontFamily: 'Figtree_600SemiBold',
+    fontSize: 16,
+  },
+  clock: {
+    position: 'absolute',
+    top: 16,
+    alignSelf: 'center',
+    backgroundColor: `${NOGUEIRA}CC`,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  summaryBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#000000AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryCard: {
+    backgroundColor: NOGUEIRA,
+    padding: 24,
+    borderRadius: 12,
+    gap: 8,
+    alignItems: 'center',
+  },
+  summaryTitle: {
+    color: CREME,
+    fontFamily: 'Figtree_600SemiBold',
+    fontSize: 22,
+  },
+  summaryButton: {
+    marginTop: 12,
+    backgroundColor: '#F3B45A',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  summaryButtonText: {
+    color: NOGUEIRA,
     fontFamily: 'Figtree_600SemiBold',
     fontSize: 16,
   },
