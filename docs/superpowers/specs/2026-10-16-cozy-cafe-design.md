@@ -198,8 +198,10 @@ por nível, de 1 a 5:
 ### Áudio
 
 Música de fundo suave, no tom ASMR/relaxante, tocando continuamente durante
-o expediente. (Direção aprovada pelo autor; curadoria/composição específica
-fica para uma fase posterior.)
+o expediente. Estilo definido: **lofi, royalty-free/sem copyright**
+(curadoria da fonte exata — Pixabay Music, YouTube Audio Library, pacotes
+de itch.io, etc. — fica para o plano de implementação de áudio, que é
+posterior a esta fatia vertical).
 
 ## O que fica a cargo do builder
 
