@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { SceneId, Order, CoffeePrep, ReviewResult } from '../game/types';
 import { generateOrder } from '../game/orders';
+import { calculateReview } from '../game/review';
 
 interface GameState {
   scene: SceneId;
@@ -57,13 +58,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   deliverOrder: (prep: CoffeePrep | null) => {
-    const review: ReviewResult = {
-      stars: 5,
-      comments: [],
-    };
-    set((state) => ({
+    const state = get();
+    if (!state.currentOrder) {
+      return; // no-op if there's no order to deliver
+    }
+    const review = calculateReview(state.currentOrder, prep);
+    set({
       reviews: [...state.reviews, review],
       currentOrder: null,
-    } as Partial<GameStore>));
+    } as Partial<GameStore>);
   },
 }));
