@@ -609,3 +609,98 @@ Expected: all tests from Tasks 2-4 and 6 PASS.
 git add src/screens/GameScreen.tsx App.tsx
 git commit -m "feat: wire game screen and complete core loop vertical slice"
 ```
+
+---
+
+## Task 9: Juice — Drag Sway Physics
+
+**Files:**
+- Create: `src/scenes/shared/dragSway.ts`
+- Test: `src/scenes/shared/dragSway.test.ts`
+- Modify: `src/scenes/CoffeeStation/CupDraggable.tsx`
+
+**Interfaces:**
+- Consumes: `CupDraggable`'s existing per-frame position update (Task 6) —
+  this task adds a rotation on top of it, it does not change how position
+  is driven.
+- Produces:
+  ```ts
+  export const MAX_SWAY_RAD = 0.35;
+  export const SWAY_FACTOR = 0.08;
+  export function computeSwayAngle(velocityX: number): number;
+  ```
+  Deliberately framework-agnostic and reusable: a future draggable object
+  (e.g. a pan, in a later plan) can import `computeSwayAngle` the same way
+  `CupDraggable` does here, without rebuilding this logic.
+
+Added by the human partner mid-execution: dragged objects should feel
+physical, not rigidly glued to the finger — a small pendulum-like tilt
+that reacts to drag velocity and settles back to neutral reinforces the
+cozy/ASMR feel this game is built around. This is pure polish (juice), not
+core mechanics — it does not change any pass/fail condition, review rule,
+or store state.
+
+- [ ] **Step 1: Write failing tests for `computeSwayAngle`**
+
+```ts
+test('zero velocity yields zero tilt', () => {
+  expect(computeSwayAngle(0)).toBe(0);
+});
+
+test('tilt is proportional to velocity and opposes the direction of motion', () => {
+  expect(computeSwayAngle(1)).toBeCloseTo(-SWAY_FACTOR, 5);
+  expect(computeSwayAngle(-1)).toBeCloseTo(SWAY_FACTOR, 5);
+});
+
+test('tilt clamps to MAX_SWAY_RAD at high velocity, in both directions', () => {
+  expect(computeSwayAngle(1000)).toBe(-MAX_SWAY_RAD);
+  expect(computeSwayAngle(-1000)).toBe(MAX_SWAY_RAD);
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `npx jest src/scenes/shared/dragSway.test.ts`
+Expected: FAIL — `computeSwayAngle` is not defined.
+
+- [ ] **Step 3: Implement `computeSwayAngle` in `src/scenes/shared/dragSway.ts`**
+
+`angle = clamp(-velocityX * SWAY_FACTOR, -MAX_SWAY_RAD, MAX_SWAY_RAD)`. Add
+this test file's path to `jest.config.js`'s `logic-tests` project
+`testMatch` array in this same commit (pure logic, same pattern as every
+prior logic file in this plan).
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `npx jest src/scenes/shared/dragSway.test.ts`
+Expected: PASS
+
+- [ ] **Step 5: Wire sway into `CupDraggable`**
+
+Inside the existing per-frame update, derive the cup's horizontal velocity
+by diffing its position against the previous frame's position over elapsed
+time (consistent with Task 6's established R3F-native-events pattern — no
+gesture-handler velocity is available here, since `GestureDetector` cannot
+attach to this mesh, per Task 6's verified finding). Feed that velocity
+into `computeSwayAngle` each frame and apply the result to the cup mesh's
+`rotation.z`, smoothed with `withSpring` (reanimated) so it settles toward
+0 both while dragging (as velocity drops) and immediately on release —
+release already resets position via Task 6's spring-back-to-origin/zone
+logic; this task makes the rotation settle the same way, not just the
+position.
+
+- [ ] **Step 6: Manual verification**
+
+Drag the cup quickly side to side and confirm it tilts opposite the motion
+direction and settles back to level when movement stops or the cup is
+released — it should read as "swinging slightly," not spinning or jittering.
+Confirm a release outside the catcher plane or with the finger leaving the
+screen (Task 6's fix) still also settles the rotation back to neutral, not
+just the position.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/scenes/shared/dragSway.ts src/scenes/shared/dragSway.test.ts src/scenes/CoffeeStation/CupDraggable.tsx jest.config.js
+git commit -m "feat: add pendulum-style sway physics to dragged objects"
+```
