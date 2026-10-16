@@ -45,17 +45,12 @@ export function FadeTransition() {
     opacity: opacity.value,
   }));
 
-  // shortcut: Animated.View's own `style` prop type recurses too deep
-  // against this RN version's StyleSheet types under reanimated 3.19
-  // (TS2589), regardless of how the style value itself is typed/cast.
-  // Spreading through an `any`-typed props object sidesteps the prop-type
-  // instantiation entirely. Revisit when reanimated/RN type defs catch up.
-  const overlayProps = {
-    style: [styles.overlay, animatedStyle],
-    pointerEvents: 'none' as const,
-  };
-
-  return <Animated.View {...(overlayProps as any)} />;
+  return (
+    <Animated.View
+      style={[styles.overlay, animatedStyle]}
+      pointerEvents="none"
+    />
+  );
 }
 
 const styles = StyleSheet.create({
