@@ -18,6 +18,7 @@ const FADE_DURATION = 250;
 export function FadeTransition() {
   const isTransitioning = useGameStore((state) => state.isTransitioning);
   const completeTransition = useGameStore((state) => state.completeTransition);
+  const scene = useGameStore((state) => state.scene);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -27,10 +28,18 @@ export function FadeTransition() {
     opacity.value = withTiming(1, { duration: FADE_DURATION }, (finished) => {
       if (finished) {
         runOnJS(completeTransition)();
-        opacity.value = withTiming(0, { duration: FADE_DURATION });
       }
     });
   }, [isTransitioning, opacity, completeTransition]);
+
+  // Fade back out only once the scene swap has actually committed on the JS
+  // thread (this effect depends on `scene`, so it only runs after React has
+  // re-rendered with the new mounted scene) — not merely after
+  // completeTransition was scheduled from the fade-in's UI-thread callback,
+  // which could land a frame early and pop the outgoing scene.
+  useEffect(() => {
+    opacity.value = withTiming(0, { duration: FADE_DURATION });
+  }, [scene, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

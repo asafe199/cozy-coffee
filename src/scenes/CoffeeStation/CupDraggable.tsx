@@ -6,7 +6,10 @@ import { MACHINE_ZONE, SUGAR_ZONE, resolveDropZone } from './dropZones';
 import { computeSwayAngle } from '../shared/dragSway';
 
 const CUP_ORIGIN = { x: 0, z: 0 };
-const CUP_Y = 0.05;
+// Cylinder height 0.12 (see geometry below), so half-height 0.06 sits the
+// cup's base exactly on the counter's top surface (y=0) instead of sunk
+// into it.
+const CUP_Y = 0.06;
 
 interface CupDraggableProps {
   onDroppedOn: (zoneId: string | null) => void;

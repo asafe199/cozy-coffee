@@ -19,6 +19,12 @@ export function GameScreen() {
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
   const reviews = useGameStore((state) => state.reviews);
   const lastStars = reviews[reviews.length - 1]?.stars;
+  const scene = useGameStore((state) => state.scene);
+  const currentOrder = useGameStore((state) => state.currentOrder);
+
+  const orderLabel = currentOrder
+    ? `Coffee${currentOrder.wantsSugar ? ' with sugar' : ''}`
+    : 'Tap for next order';
 
   return (
     <View style={styles.container}>
@@ -31,6 +37,11 @@ export function GameScreen() {
           </Text>
         )}
       </View>
+      {scene === 'orderBoard' && (
+        <View style={styles.orderLabel} pointerEvents="none">
+          {fontsLoaded && <Text style={styles.orderLabelText}>{orderLabel}</Text>}
+        </View>
+      )}
     </View>
   );
 }
@@ -49,6 +60,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   hudText: {
+    color: CREME,
+    fontFamily: 'Figtree_600SemiBold',
+    fontSize: 16,
+  },
+  orderLabel: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: `${NOGUEIRA}CC`,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  orderLabelText: {
     color: CREME,
     fontFamily: 'Figtree_600SemiBold',
     fontSize: 16,

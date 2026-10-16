@@ -15,10 +15,11 @@ const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as 
 
 /**
  * Coffee station scene: the machine (tap once the cup is on MACHINE_ZONE to
- * pour), the sugar packet, the draggable cup, and a "done" trigger that only
- * does anything once poured. Local component state (poured/cupZone/
- * hasTouchedSugar/entry time) is intentionally not lifted to the store: this
- * component unmounts/remounts fresh every time the player enters/leaves the
+ * pour), the sugar packet, the draggable cup, and a "done" trigger that
+ * always leaves for the delivery counter, poured or not (an unpoured prep is
+ * a valid null input downstream — never a dead end). Local component state
+ * (poured/cupZone/hasTouchedSugar/entry time) is intentionally not lifted to
+ * the store: this component unmounts/remounts fresh every time the player enters/leaves the
  * station (GameScene renders only one scene at a time), which is exactly the
  * reset behavior we want between visits.
  */
@@ -27,6 +28,7 @@ export function CoffeeStation() {
 
   const startTransition = useGameStore((state) => state.startTransition);
   const setPendingPrep = useGameStore((state) => state.setPendingPrep);
+  const isTransitioning = useGameStore((state) => state.isTransitioning);
 
   const entryTimeRef = useRef<number>(Date.now());
   const [cupZone, setCupZone] = useState<string | null>(null);
@@ -43,20 +45,20 @@ export function CoffeeStation() {
   const canPour = !poured && cupZone === MACHINE_ZONE.id;
 
   const handlePour = () => {
-    if (!canPour) {
+    if (isTransitioning || !canPour) {
       return;
     }
     setPoured(true);
   };
 
+  // Always leaves, poured or not: a player who never figures out the pour
+  // isn't trapped (no back button exists), and an unpoured prep is a valid,
+  // non-crashing input — calculateReview's null-prep branch handles it.
   const handleDone = () => {
-    if (!poured) {
+    if (isTransitioning) {
       return;
     }
-    setPendingPrep({
-      sugarAdded: hasTouchedSugar,
-      prepTimeMs: Date.now() - entryTimeRef.current,
-    });
+    setPendingPrep(poured ? { sugarAdded: hasTouchedSugar, prepTimeMs: Date.now() - entryTimeRef.current } : null);
     startTransition('deliveryCounter');
   };
 
@@ -70,8 +72,11 @@ export function CoffeeStation() {
 
       {/* Coffee machine, geometry/material approach reused from the approved
           preview (preview-3d-lowpoly-v2.html): box body + top + spout + two
-          knobs. Tap the body to pour, once the cup is on MACHINE_ZONE. */}
-      <group position={[MACHINE_ZONE.x, 0, MACHINE_ZONE.z]}>
+          knobs. Tap the body to pour, once the cup is on MACHINE_ZONE. The
+          body's own world position is fixed here (z=0), independent of
+          MACHINE_ZONE's z — that zone is the cup's snap target in front of
+          the spout, not the body's location (see dropZones.ts). */}
+      <group position={[MACHINE_ZONE.x, 0, 0]}>
         <mesh position={[0, 0.31, 0]} onPointerDown={handlePour}>
           <boxGeometry args={[0.62, 0.62, 0.42]} />
           <meshStandardMaterial color={poured ? AMBAR : '#a8532f'} {...materialProps} />
@@ -92,15 +97,17 @@ export function CoffeeStation() {
         ))}
       </group>
 
-      {/* Sugar packet */}
-      <mesh position={[SUGAR_ZONE.x, 0.03, SUGAR_ZONE.z]}>
+      {/* Sugar packet, offset beside SUGAR_ZONE's center so the snapped cup
+          (which sits exactly at that center) doesn't visually swallow it. */}
+      <mesh position={[SUGAR_ZONE.x, 0.03, SUGAR_ZONE.z + 0.25]}>
         <boxGeometry args={[0.14, 0.06, 0.1]} />
         <meshStandardMaterial color={CREME} {...materialProps} />
       </mesh>
 
       <CupDraggable onDroppedOn={handleDroppedOn} />
 
-      {/* Done trigger: enabled (amber) only once poured. */}
+      {/* Done trigger: always leaves the station (see handleDone); amber vs.
+          gray is just a visual cue for whether a drink was poured. */}
       <mesh position={[0, 0.05, 0.85]} onPointerDown={handleDone}>
         <boxGeometry args={[0.5, 0.1, 0.25]} />
         <meshStandardMaterial color={poured ? AMBAR : DISABLED} {...materialProps} />

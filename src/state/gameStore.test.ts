@@ -6,6 +6,7 @@ const initialStateValues = {
   pendingScene: null,
   currentOrder: null,
   reviews: [],
+  pendingPrep: null,
 };
 
 beforeEach(() => {

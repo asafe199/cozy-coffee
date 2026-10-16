@@ -20,15 +20,16 @@ export function DeliveryCounter() {
   const startTransition = useGameStore((state) => state.startTransition);
   const pendingPrep = useGameStore((state) => state.pendingPrep);
   const setPendingPrep = useGameStore((state) => state.setPendingPrep);
+  const isTransitioning = useGameStore((state) => state.isTransitioning);
 
   const handleDeliver = () => {
+    if (isTransitioning) {
+      return;
+    }
     deliverOrder(pendingPrep);
     setPendingPrep(null);
     requestNextOrder();
     startTransition('orderBoard');
-    // Temporary visibility into the review outcome; Task 8 adds the real HUD.
-    // eslint-disable-next-line no-console
-    console.log('reviews', useGameStore.getState().reviews);
   };
 
   return (
