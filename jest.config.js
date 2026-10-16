@@ -2,7 +2,7 @@ module.exports = {
   projects: [
     {
       displayName: 'logic-tests',
-      testMatch: ['<rootDir>/src/state/gameStore.test.ts'],
+      testMatch: ['<rootDir>/src/state/gameStore.test.ts', '<rootDir>/src/game/orders.test.ts'],
       preset: 'jest-expo',
       testEnvironment: 'node',
     },

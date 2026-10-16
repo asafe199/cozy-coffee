@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { SceneId, Order, CoffeePrep, ReviewResult } from '../game/types';
+import { generateOrder } from '../game/orders';
 
 interface GameState {
   scene: SceneId;
@@ -29,11 +30,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Actions
   requestNextOrder: () => {
     set({
-      currentOrder: {
-        id: Math.random().toString(36).substring(7),
-        recipe: 'coffee',
-        wantsSugar: Math.random() > 0.5,
-      },
+      currentOrder: generateOrder(),
     } as Partial<GameStore>);
   },
 
