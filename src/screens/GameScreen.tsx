@@ -23,7 +23,13 @@ export function GameScreen() {
   const currentOrder = useGameStore((state) => state.currentOrder);
 
   const orderLabel = currentOrder
-    ? `Coffee${currentOrder.wantsSugar ? ' with sugar' : ''}`
+    ? currentOrder.items
+        .map((item) =>
+          item.recipe === 'coffee'
+            ? `Coffee${item.wantsSugar ? ' with sugar' : ''}`
+            : `Toast${item.wantsButter ? ' with butter' : ''}`
+        )
+        .join(' + ')
     : 'Tap for next order';
 
   return (

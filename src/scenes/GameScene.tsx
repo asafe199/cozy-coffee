@@ -4,6 +4,7 @@ import { useGameStore } from '../state/gameStore';
 import { OrderBoard } from './OrderBoard/OrderBoard';
 import { CoffeeStation } from './CoffeeStation/CoffeeStation';
 import { DeliveryCounter } from './DeliveryCounter/DeliveryCounter';
+import { ToastStation } from './ToastStation/ToastStation';
 
 /**
  * The <Canvas> root rendered by GameScreen (Task 8). Lighting matches the
@@ -26,6 +27,7 @@ export function GameScene() {
       <directionalLight color={0xffdca0} intensity={1.3} position={[5, 7, 4]} />
       {scene === 'orderBoard' && <OrderBoard />}
       {scene === 'coffeeStation' && <CoffeeStation />}
+      {scene === 'toastStation' && <ToastStation />}
       {scene === 'deliveryCounter' && <DeliveryCounter />}
     </Canvas>
   );

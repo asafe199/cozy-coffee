@@ -1,33 +1,86 @@
 import { calculateReview } from './review';
-import { Order } from './types';
+import { Order, ItemPrep } from './types';
 
-const order: Order = { id: '1', recipe: 'coffee', wantsSugar: true };
+const coffeeOrder: Order = { id: '1', items: [{ recipe: 'coffee', wantsSugar: true }] };
+const comboOrder: Order = {
+  id: '2',
+  items: [
+    { recipe: 'coffee', wantsSugar: true },
+    { recipe: 'toast', wantsButter: true },
+  ],
+};
 
-test('never-prepared delivery (prep is null) is worst-case, not a crash', () => {
-  const result = calculateReview(order, null);
+const goodCoffee: ItemPrep = { recipe: 'coffee', sugarAdded: true, prepTimeMs: 1000 };
+const goodToast: ItemPrep = { recipe: 'toast', butterAdded: true, toastedMs: 3000 };
+
+test('never-prepared delivery (no preps) is worst-case, not a crash', () => {
+  const result = calculateReview(coffeeOrder, []);
   expect(result.stars).toBe(1);
   expect(result.comments).toContain('order_never_prepared');
 });
 
-test('perfect prep within time, correct sugar, yields 5 stars with no comments', () => {
-  const result = calculateReview(order, { sugarAdded: true, prepTimeMs: 1000 });
+test('null prep entries are treated as never prepared', () => {
+  const result = calculateReview(coffeeOrder, [null]);
+  expect(result.stars).toBe(1);
+  expect(result.comments).toContain('order_never_prepared');
+});
+
+test('perfect coffee yields 5 stars with no comments', () => {
+  const result = calculateReview(coffeeOrder, [goodCoffee]);
   expect(result.stars).toBe(5);
   expect(result.comments).toHaveLength(0);
 });
 
 test('missing requested sugar lowers stars and adds a comment', () => {
-  const result = calculateReview(order, { sugarAdded: false, prepTimeMs: 1000 });
+  const result = calculateReview(coffeeOrder, [{ ...goodCoffee, sugarAdded: false } as ItemPrep]);
   expect(result.stars).toBe(4);
   expect(result.comments).toContain('missing_sugar');
 });
 
-test('prep time over the threshold lowers stars and adds a comment', () => {
-  const result = calculateReview(order, { sugarAdded: true, prepTimeMs: 9000 });
+test('coffee prep over the threshold lowers stars and adds a comment', () => {
+  const result = calculateReview(coffeeOrder, [{ ...goodCoffee, prepTimeMs: 9000 } as ItemPrep]);
   expect(result.stars).toBe(4);
   expect(result.comments).toContain('too_slow');
 });
 
+test('perfect two-item order yields 5 stars', () => {
+  const result = calculateReview(comboOrder, [goodCoffee, goodToast]);
+  expect(result.stars).toBe(5);
+});
+
+test('missing butter lowers stars', () => {
+  const result = calculateReview(comboOrder, [goodCoffee, { ...goodToast, butterAdded: false } as ItemPrep]);
+  expect(result.stars).toBe(4);
+  expect(result.comments).toContain('missing_butter');
+});
+
+test('burned toast lowers stars', () => {
+  const result = calculateReview(comboOrder, [goodCoffee, { ...goodToast, toastedMs: 20000 } as ItemPrep]);
+  expect(result.stars).toBe(4);
+  expect(result.comments).toContain('burned_toast');
+});
+
+test('untoasted bread (never toasted) lowers stars', () => {
+  const result = calculateReview(comboOrder, [goodCoffee, { ...goodToast, toastedMs: 0 } as ItemPrep]);
+  expect(result.comments).toContain('untoasted_bread');
+  expect(result.stars).toBe(4);
+});
+
+test('a skipped second item is penalized but the first still counts', () => {
+  const result = calculateReview(comboOrder, [goodCoffee]);
+  expect(result.comments).toContain('order_never_prepared');
+  expect(result.stars).toBeLessThan(5);
+});
+
 test('stars never drop below 1 even with every rule failing', () => {
-  const result = calculateReview(order, { sugarAdded: false, prepTimeMs: 20000 });
+  const result = calculateReview(comboOrder, [
+    { recipe: 'coffee', sugarAdded: false, prepTimeMs: 20000 },
+    { recipe: 'toast', butterAdded: false, toastedMs: 20000 },
+  ]);
   expect(result.stars).toBeGreaterThanOrEqual(1);
+});
+
+test('a mismatched prep type is treated as never prepared', () => {
+  const result = calculateReview(comboOrder, [goodToast, goodCoffee]);
+  expect(result.comments).toContain('order_never_prepared');
 });

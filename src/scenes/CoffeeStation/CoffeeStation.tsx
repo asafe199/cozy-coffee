@@ -26,8 +26,8 @@ const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as 
 export function CoffeeStation() {
   useSceneCamera([0, 1.6, 1.8], [0, 0, 0]);
 
+  const completeItem = useGameStore((state) => state.completeItem);
   const startTransition = useGameStore((state) => state.startTransition);
-  const setPendingPrep = useGameStore((state) => state.setPendingPrep);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
 
   const entryTimeRef = useRef<number>(Date.now());
@@ -58,8 +58,12 @@ export function CoffeeStation() {
     if (isTransitioning) {
       return;
     }
-    setPendingPrep(poured ? { sugarAdded: hasTouchedSugar, prepTimeMs: Date.now() - entryTimeRef.current } : null);
-    startTransition('deliveryCounter');
+    const next = completeItem(
+      poured
+        ? { recipe: 'coffee', sugarAdded: hasTouchedSugar, prepTimeMs: Date.now() - entryTimeRef.current }
+        : null
+    );
+    startTransition(next);
   };
 
   return (

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { SceneId, Order, CoffeePrep, ReviewResult } from '../game/types';
-import { generateOrder } from '../game/orders';
+import { SceneId, Order, ItemPrep, ReviewResult } from '../game/types';
+import { generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
 
 interface GameState {
@@ -9,15 +9,19 @@ interface GameState {
   pendingScene: SceneId | null;
   currentOrder: Order | null;
   reviews: ReviewResult[];
-  pendingPrep: CoffeePrep | null;
+  itemIndex: number;
+  preps: (ItemPrep | null)[];
 }
 
 interface GameActions {
   requestNextOrder: () => void;
+  /** Ensures an order exists (never overwrites one in flight) and returns the first station to visit. */
+  beginOrder: () => SceneId;
   startTransition: (target: SceneId) => void;
   completeTransition: () => void;
-  deliverOrder: (prep: CoffeePrep | null) => void;
-  setPendingPrep: (prep: CoffeePrep | null) => void;
+  /** Records the current item's prep and returns the next scene to visit. */
+  completeItem: (prep: ItemPrep | null) => SceneId;
+  deliverOrder: () => void;
 }
 
 type GameStore = GameState & GameActions;
@@ -29,13 +33,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingScene: null,
   currentOrder: null,
   reviews: [],
-  pendingPrep: null,
+  itemIndex: 0,
+  preps: [],
 
   // Actions
   requestNextOrder: () => {
     set({
       currentOrder: generateOrder(),
+      itemIndex: 0,
+      preps: [],
     } as Partial<GameStore>);
+  },
+
+  beginOrder: () => {
+    if (!get().currentOrder) {
+      get().requestNextOrder();
+    }
+    const order = get().currentOrder as Order;
+    return stationForItem(order.items[get().itemIndex] ?? order.items[0]);
   },
 
   startTransition: (target: SceneId) => {
@@ -60,19 +75,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  deliverOrder: (prep: CoffeePrep | null) => {
+  completeItem: (prep: ItemPrep | null) => {
+    const state = get();
+    const order = state.currentOrder;
+    if (!order) {
+      return 'orderBoard';
+    }
+    const preps = [...state.preps];
+    preps[state.itemIndex] = prep;
+    const nextIndex = state.itemIndex + 1;
+    set({ preps, itemIndex: nextIndex } as Partial<GameStore>);
+    const nextItem = order.items[nextIndex];
+    return nextItem ? stationForItem(nextItem) : 'deliveryCounter';
+  },
+
+  deliverOrder: () => {
     const state = get();
     if (!state.currentOrder) {
       return; // no-op if there's no order to deliver
     }
-    const review = calculateReview(state.currentOrder, prep);
+    const review = calculateReview(state.currentOrder, state.preps);
     set({
       reviews: [...state.reviews, review],
       currentOrder: null,
+      itemIndex: 0,
+      preps: [],
     } as Partial<GameStore>);
-  },
-
-  setPendingPrep: (prep: CoffeePrep | null) => {
-    set({ pendingPrep: prep } as Partial<GameStore>);
   },
 }));

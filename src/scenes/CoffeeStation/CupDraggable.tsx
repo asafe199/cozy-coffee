@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { useSharedValue, withSpring } from 'react-native-reanimated';
-import { MACHINE_ZONE, SUGAR_ZONE, resolveDropZone } from './dropZones';
+import { MACHINE_ZONE, SUGAR_ZONE, Zone, resolveDropZone } from './dropZones';
 import { computeSwayAngle } from '../shared/dragSway';
 
 const CUP_ORIGIN = { x: 0, z: 0 };
@@ -13,6 +13,10 @@ const CUP_Y = 0.06;
 
 interface CupDraggableProps {
   onDroppedOn: (zoneId: string | null) => void;
+  zones?: Zone[];
+  // Replaces the default cup geometry/material (used by other stations' draggables).
+  children?: React.ReactNode;
+  y?: number;
 }
 
 type CaptureTarget = {
@@ -50,7 +54,12 @@ export function isLostCaptureForPointer(
  * Position is kept in reanimated shared values (not React state) and
  * written onto the mesh every frame via useFrame, per the brief.
  */
-export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
+export function CupDraggable({
+  onDroppedOn,
+  zones = [MACHINE_ZONE, SUGAR_ZONE],
+  children,
+  y = CUP_Y,
+}: CupDraggableProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const posX = useSharedValue(CUP_ORIGIN.x);
   const posZ = useSharedValue(CUP_ORIGIN.z);
@@ -133,7 +142,7 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
     if (!isDragging.current) {
       return;
     }
-    finalize(resolveDropZone({ x: posX.value, z: posZ.value }, [MACHINE_ZONE, SUGAR_ZONE]));
+    finalize(resolveDropZone({ x: posX.value, z: posZ.value }, zones));
   };
 
   useFrame((_state, delta) => {
@@ -177,7 +186,7 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
 
       <mesh
         ref={meshRef}
-        position={[CUP_ORIGIN.x, CUP_Y, CUP_ORIGIN.z]}
+        position={[CUP_ORIGIN.x, y, CUP_ORIGIN.z]}
         onPointerDown={(event: ThreeEvent<PointerEvent>) => {
           isDragging.current = true;
           // Captures this pointerId to the cup so onPointerMove/onPointerUp keep firing even
@@ -192,8 +201,12 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
         }}
         onPointerUp={handleUp}
       >
-        <cylinderGeometry args={[0.1, 0.08, 0.12, 16]} />
-        <meshStandardMaterial color="white" />
+        {children ?? (
+          <>
+            <cylinderGeometry args={[0.1, 0.08, 0.12, 16]} />
+            <meshStandardMaterial color="white" />
+          </>
+        )}
       </mesh>
     </>
   );

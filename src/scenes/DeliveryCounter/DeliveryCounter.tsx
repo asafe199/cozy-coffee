@@ -18,16 +18,13 @@ export function DeliveryCounter() {
   const deliverOrder = useGameStore((state) => state.deliverOrder);
   const requestNextOrder = useGameStore((state) => state.requestNextOrder);
   const startTransition = useGameStore((state) => state.startTransition);
-  const pendingPrep = useGameStore((state) => state.pendingPrep);
-  const setPendingPrep = useGameStore((state) => state.setPendingPrep);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
 
   const handleDeliver = () => {
     if (isTransitioning) {
       return;
     }
-    deliverOrder(pendingPrep);
-    setPendingPrep(null);
+    deliverOrder();
     requestNextOrder();
     startTransition('orderBoard');
   };

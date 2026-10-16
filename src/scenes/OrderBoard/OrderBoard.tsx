@@ -14,8 +14,7 @@ const MADEIRA = '#6B4226';
 export function OrderBoard() {
   useSceneCamera([0, 0, 2.2], [0, 0, 0]);
 
-  const currentOrder = useGameStore((state) => state.currentOrder);
-  const requestNextOrder = useGameStore((state) => state.requestNextOrder);
+  const beginOrder = useGameStore((state) => state.beginOrder);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
 
@@ -23,11 +22,8 @@ export function OrderBoard() {
     if (isTransitioning) {
       return;
     }
-    // Never overwrite an order mid-flight: only generate one when there isn't one already.
-    if (!currentOrder) {
-      requestNextOrder();
-    }
-    startTransition('coffeeStation');
+    // beginOrder never overwrites an order that's already in flight.
+    startTransition(beginOrder());
   };
 
   return (
