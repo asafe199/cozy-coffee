@@ -1,25 +1,35 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { ThreeEvent, useFrame } from '@react-three/fiber';
+import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { useSharedValue, withSpring } from 'react-native-reanimated';
 import { MACHINE_ZONE, SUGAR_ZONE, resolveDropZone } from './dropZones';
 
 const CUP_ORIGIN = { x: 0, z: 0 };
 const CUP_Y = 0.05;
-// shortcut: if no pointermove/down reaches us for this long while "dragging", treat the
-// gesture as abandoned (finger lifted off-screen, or RN's responder was stolen by an OS
-// edge-gesture mid-drag) and recover. Needed because R3F's native event core never invokes
-// a user onLostPointerCapture handler on gesture termination (confirmed by reading its
-// source: the 'onLostPointerCapture' case in handlePointer() only clears internal capture
-// bookkeeping, it never calls instance.handlers.onLostPointerCapture) — so that case is
-// otherwise invisible to this component. 400ms is comfortably longer than the gap between
-// real touchmove samples (even a near-still finger keeps producing them from hand tremor),
-// so this shouldn't fire during a deliberate mid-drag pause; upgrade to a shorter value only
-// if real-device testing shows recovery feels sluggish.
-const ABANDONED_DRAG_MS = 400;
 
 interface CupDraggableProps {
   onDroppedOn: (zoneId: string | null) => void;
+}
+
+type CaptureTarget = {
+  setPointerCapture: (id: number) => void;
+  releasePointerCapture: (id: number) => void;
+};
+
+// R3F's canvas-level event target (state.events.connected) is a real EventTarget-like
+// object (addEventListener/removeEventListener/dispatchEvent) that every pointer event,
+// including 'lostpointercapture', passes through on its way to per-mesh handlers.
+type CanvasEventTarget = {
+  addEventListener: (type: string, listener: (event: { pointerId?: number }) => void) => void;
+  removeEventListener: (type: string, listener: (event: { pointerId?: number }) => void) => void;
+};
+
+/** True if a canvas-level 'lostpointercapture' event is for the pointer we're tracking. */
+export function isLostCaptureForPointer(
+  event: { pointerId?: number },
+  trackedPointerId: number | null
+): boolean {
+  return trackedPointerId !== null && event.pointerId === trackedPointerId;
 }
 
 /**
@@ -41,12 +51,27 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
   const posX = useSharedValue(CUP_ORIGIN.x);
   const posZ = useSharedValue(CUP_ORIGIN.z);
   const isDragging = useRef(false);
-  const lastActivity = useRef(0);
+  // The capture target/pointerId recorded at pointerdown time, when event.target is
+  // unambiguously scoped to the cup. onPointerUp can fire with event.target scoped to
+  // whichever element's hit happened to be processed first (the catcher plane, if the
+  // release lands there) — releasing through that mis-scoped target is a silent no-op, so
+  // release is always done through this stored reference instead of the release event's own.
+  const capturedTarget = useRef<CaptureTarget | null>(null);
+  const trackedPointerId = useRef<number | null>(null);
+
+  // Keeps the callback passed to the canvas-level listener (registered once, see useEffect
+  // below) from closing over a stale onDroppedOn/finalize if this component re-renders.
+  const finalizeRef = useRef<(zone: { x: number; z: number; id: string } | null) => void>(
+    () => {}
+  );
 
   // Shared end-of-drag logic: snap to a zone's center and report it, or spring back to the
-  // cup's origin and report null. Used by both a clean release and the abandoned-drag watchdog.
+  // cup's origin and report null. Used by a clean release and by the lost-capture listener.
   const finalize = (zone: { x: number; z: number; id: string } | null) => {
     isDragging.current = false;
+    capturedTarget.current?.releasePointerCapture(trackedPointerId.current ?? -1);
+    capturedTarget.current = null;
+    trackedPointerId.current = null;
     if (zone) {
       posX.value = withSpring(zone.x);
       posZ.value = withSpring(zone.z);
@@ -57,35 +82,50 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
       onDroppedOn(null);
     }
   };
+  finalizeRef.current = finalize;
+
+  // Canvas-level 'lostpointercapture' listener: RN's PanResponder dispatches this when the
+  // gesture is terminated outside a normal release (an OS edge-swipe or system overlay steals
+  // the touch responder mid-drag — confirmed in @react-three/fiber's native build source).
+  // R3F's own internal handling of this event only clears its bookkeeping and never calls a
+  // per-mesh onLostPointerCapture prop (confirmed by reading its event core), so the only way
+  // to actually hear about this is to listen on the canvas-level target directly, the same
+  // object R3F itself dispatches the event through.
+  const connected = useThree((state) => state.events.connected) as CanvasEventTarget | undefined;
+  useEffect(() => {
+    if (!connected) {
+      return;
+    }
+    const handleLostCapture = (event: { pointerId?: number }) => {
+      if (!isDragging.current || !isLostCaptureForPointer(event, trackedPointerId.current)) {
+        return;
+      }
+      // Gesture was torn down by the OS, not by the player — always return to origin,
+      // never snap to a zone, per the "never stay stuck" requirement.
+      finalizeRef.current(null);
+    };
+    connected.addEventListener('lostpointercapture', handleLostCapture);
+    return () => connected.removeEventListener('lostpointercapture', handleLostCapture);
+  }, [connected]);
 
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
     if (!isDragging.current) {
       return;
     }
-    lastActivity.current = Date.now();
     posX.value = event.point.x;
     posZ.value = event.point.z;
   };
 
-  const handleUp = (event: ThreeEvent<PointerEvent>) => {
+  const handleUp = () => {
     if (!isDragging.current) {
       return;
     }
-    (event.target as unknown as { releasePointerCapture: (id: number) => void }).releasePointerCapture(
-      event.pointerId
-    );
     finalize(resolveDropZone({ x: posX.value, z: posZ.value }, [MACHINE_ZONE, SUGAR_ZONE]));
   };
 
   useFrame(() => {
     if (!meshRef.current) {
       return;
-    }
-    if (isDragging.current && Date.now() - lastActivity.current > ABANDONED_DRAG_MS) {
-      // No pointer event reached us for a while while supposedly dragging — the gesture
-      // was abandoned (finger left the screen / responder stolen). Always return to origin,
-      // never snap to a zone, per the "never stay stuck" requirement.
-      finalize(null);
     }
     meshRef.current.position.x = posX.value;
     meshRef.current.position.z = posZ.value;
@@ -112,14 +152,15 @@ export function CupDraggable({ onDroppedOn }: CupDraggableProps) {
         position={[CUP_ORIGIN.x, CUP_Y, CUP_ORIGIN.z]}
         onPointerDown={(event: ThreeEvent<PointerEvent>) => {
           isDragging.current = true;
-          lastActivity.current = Date.now();
-          // Captures this pointerId to the cup so onPointerMove/onPointerUp keep
-          // firing even if the finger strays past the catcher plane's bounds —
-          // without this, a release outside any hit-testable geometry would
-          // never reach handleUp and strand isDragging as true forever.
-          (event.target as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture(
-            event.pointerId
-          );
+          // Captures this pointerId to the cup so onPointerMove/onPointerUp keep firing even
+          // if the finger strays past the catcher plane's bounds — without this, a release
+          // outside any hit-testable geometry would never reach handleUp and strand
+          // isDragging as true forever. event.target here is unambiguously the cup (this is
+          // the pointerdown handler), so it's safe to store for release later.
+          const target = event.target as unknown as CaptureTarget;
+          target.setPointerCapture(event.pointerId);
+          capturedTarget.current = target;
+          trackedPointerId.current = event.pointerId;
         }}
         onPointerUp={handleUp}
       >
