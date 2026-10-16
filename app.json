@@ -24,6 +24,12 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "494eff88-5a39-48f1-b047-e6eb67c0adcc"
+      }
+    },
+    "owner": "stackoverlflow"
   }
 }
