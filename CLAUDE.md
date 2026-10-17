@@ -140,60 +140,22 @@ has been built in the cloud, installed on an emulator via `adb`, and the
 app has been confirmed actually running — not just building — with
 Reanimated 4 functioning. This was the hard part; see "Hard-won lessons."
 
-**Local persistence (day/money survive app restart) — in progress, THIS
-worktree, not yet merged to main:** plan at
-`docs/superpowers/plans/2026-10-16-brewlight-local-persistence.md`.
-Task 1 (persistence module) and Task 2 (store wiring) are done and
-reviewed clean. **Task 3 (hydrate on app launch, in `GameScreen.tsx`) has
-NOT been started.** The ledger at
-`.superpowers/sdd/2026-10-16-brewlight-local-persistence/progress.md` has
-the exact resume point. Do not re-do Tasks 1-2; do not merge this worktree
-until Task 3 and a final whole-branch review are done
-(`superpowers:subagent-driven-development` process).
+**Latest status (2026-10-17) — see `docs/PROGRESS.md` for the full log.**
+Persistence (day/money, hydrated in `App.tsx`), main menu, instructions,
+level select, options (hints toggle + language PT/EN/ES), i18n of all
+in-game text, order queue, single-world camera pan, 5 playable levels, and
+5 recipes (coffee, toast, juice, pancakes, salad) are all implemented and
+committed on the working branch. `npx tsc --noEmit` is clean and
+`npx jest` passes (116 tests). Visuals/physics tuning is NOT verified
+on-device from the authoring environment — expect small alignment fixes.
 
-**Main menu (slice 1) — done, uncommitted review pending:** spec
-`docs/superpowers/specs/2026-10-16-brewlight-main-menu-design.md`, plan
-`docs/superpowers/plans/2026-10-16-brewlight-main-menu.md`. `App.tsx` now
-switches menu/placeholder via `useState` and **hydrates saved progress at
-launch** (this supersedes persistence Task 3's `GameScreen` location).
-Flow is now menu → instructions → level select → game
-(`App.tsx`, `useState` switch); only level 1 is selectable, 2-5 show
-"Bloqueado" (no IAP yet). `PlaceholderScreen` is unused but kept. Pending: no way back from game to menu.
-**Order queue — done:** orders arrive over the shift (`src/game/queue.ts`,
-`useOrderArrivals`): up to 3 pending, faster at peak, never expiring.
-The board's pending orders are RN `Pressable` cards in `OrderQueueOverlay`
-(not 3D meshes); tapping one calls `beginOrder(id)`. Tapping the 3D board
-takes the oldest. `DeliveryCounter` no longer pre-generates the next order.
-`jest.setup.js` no longer loads the reanimated mock (it broke under
-reanimated 4 + worklets); RNTL v14 `render`/`fireEvent` must be awaited.
+## Not yet done
 
-**New design requirements dictated 2026-10-16, in this worktree's design
-doc but NOT YET MERGED to main** (`docs/superpowers/specs/2026-10-16-cozy-cafe-design.md`,
-sections "Fluxo de telas" and "Cardápio expandido"): a main menu (game
-name, color palette, Iniciar/Salvar/Sair), an instructions screen, a
-level-select screen (5 level thumbnails, simple café → sophisticated café,
-level 1 unlocked / 2-5 locked behind the paywall), then into the existing
-gameplay loop. Plus more recipe types eventually (juice, salad, etc. —
-exact list still open).
-
-## Not yet done (per the design doc's scope)
-
-In priority/dependency order for the next session to pick up:
-1. **Finish the local persistence plan** (Task 3 above, then its final
-   review, then merge this worktree).
-2. **Progression/leveling** (5 levels, equipment/recipe unlocks, paywall
-   at level 1→2) — no plan written yet.
-3. **Main menu + instructions + level-select screens** — requirements
-   captured above, no plan written yet. Depends on persistence (to know
-   what to show for "Continuar") and progression (to know which levels are
-   unlocked).
-4. **3 languages** (PT/EN/ES) — currently English-only strings, no i18n
-   wiring yet.
-5. **Audio** — direction decided (lofi, royalty-free), not sourced/wired.
-6. **Monetization/IAP** — free download, level 1 free, single IAP unlocks
-   levels 2-5. Not implemented; depends on progression.
-7. **Expanded recipes** (juice, salad, etc.) beyond coffee/toast — exact
-   list still open, same station+preparo pattern as existing recipes.
+1. **Monetization/IAP** — `FULL_VERSION_UNLOCKED = true` in `src/game/levels.ts` is a placeholder; levels 2-5 are open. Wire the real purchase and flip it.
+2. **Audio** — lofi, royalty-free; not sourced/wired.
+3. **New café background** — the user will supply one (the procedural backdrop was removed; background is flat `#2B2729` / per-level theme).
+4. **On-device tuning** — appliance/zone positions of the new stations (`src/scenes/RecipeStation/specs.ts`), toaster slot, coffee bay/spout, pan speed.
+5. **More cafe mechanics ideas** — milk frothing / latte art (barista research), upgrade purchases with in-game money (`upgradeCost`, `canUpgrade` exist but are unused in the UI), decor that varies per level.
 
 ## Project structure
 
@@ -204,10 +166,11 @@ src/
   scenes/
     OrderBoard/        — order board scene
     CoffeeStation/      — coffee station scene + CupDraggable + drop zones
-    ToastStation/       — toast station scene (added later, not yet reviewed)
+    ToastStation/       — toast station scene
+    RecipeStation/      — generic station for juice/pancakes/salad (specs.ts = per-recipe data)
     DeliveryCounter/    — delivery counter scene
     FadeTransition/     — the hard-cut fade overlay between scenes
-    shared/             — dragSway (pendulum physics), sceneCamera
+    shared/             — dragSway, world layout, CameraRig, props (baked models, steam, liquid)
     GameScene.tsx        — <Canvas> root, switches between scenes by store.scene
   screens/
     GameScreen.tsx        — top-level screen: GameScene + FadeTransition + HUD (RN <Text>, not in-Canvas)
@@ -223,4 +186,13 @@ Scenes live side by side in one world (`src/scenes/shared/world.ts`); `CameraRig
 
 ## Levels (1-5)
 
-`src/game/levels.ts` `levelConfig(level)` drives orders per shift, max items per order, price multiplier and lighting/background theme; `recipesForLevel` gates toast (level 1 = coffee only). `useGameStore.selectLevel` starts a fresh shift. `FULL_VERSION_UNLOCKED = true` is a placeholder until the IAP exists — flip it to gate levels 2-5.
+`src/game/levels.ts` `levelConfig(level)` drives orders per shift, max items per order, price multiplier, table scale/color and lighting/background theme. `recipesForLevel`: L1 coffee; L2 +toast; L3 +juice; L4 +pancakes; L5 +salad. `useGameStore.selectLevel` starts a fresh shift. The world layout is level-aware: `sceneX(scene, level)` (world.ts) packs only the stations the level serves, and `neighborScene(scene, dir, level)` (navigation.ts) skips the rest.
+
+## Recipes
+
+Adding a coffee/toast-style recipe: extend `Recipe`/`OrderItem`/`ItemPrep` (`src/game/types.ts`), `STATION` + `makeItem` (`orders.ts`), `ITEM_PRICES` (`menu.ts`), review rules (`review.ts`), i18n words/hints (`strings.ts`, `orderWords`), `HINTS` in `GameScreen.tsx`. Juice/pancakes/salad share `ExtraRecipe` (`wantsExtra`/`extraAdded`/`processMs`) and one component, `RecipeStation`, driven by `SPECS` in `src/scenes/RecipeStation/specs.ts`. Draggables must have the model's geometry on the draggable mesh itself (children of `CupDraggable` must be `ModelParts`/meshes, not a wrapping group, or the mesh is not hit-testable).
+
+## Docs for agents
+
+- `docs/PROGRESS.md` — chronological log of what was built, decisions and open items.
+- `docs/ASSETS.md` — model sources and the regenerate command.
