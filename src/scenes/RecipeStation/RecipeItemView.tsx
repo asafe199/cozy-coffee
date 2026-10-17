@@ -1,3 +1,4 @@
+import { Steam } from '../shared/props/Steam';
 import React from 'react';
 import { ModelParts } from '../shared/props/ModelParts';
 import { CoffeeLiquid } from '../shared/props/CoffeeLiquid';
@@ -63,6 +64,9 @@ export function RecipeItemView({ spec, processed, extraAdded, size = 1, fillSeco
             maxHeight={0.17}
           />
         </group>
+      )}
+      {spec.recipe === 'pancakes' && (
+        <Steam active={processed} position={[0, offsetY + 0.06 * size, 0]} />
       )}
       {extraAdded && (
         <group position={[0, offsetY, 0]}>

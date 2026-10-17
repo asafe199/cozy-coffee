@@ -1,3 +1,4 @@
+import { Steam } from '../shared/props/Steam';
 import { levelConfig } from '../../game/levels';
 import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
@@ -106,6 +107,7 @@ export function CoffeeStation() {
       <CupDraggable onDroppedOn={handleDroppedOn}>
         <ModelParts data={CUP_EMPTY} scale={0.22} offsetY={-0.06} />
         <CoffeeLiquid filled={poured} />
+        <Steam active={poured} position={[0, 0.06, 0]} />
       </CupDraggable>
 
       {/* Done trigger: always leaves the station (see handleDone); amber vs.

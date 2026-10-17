@@ -36,6 +36,8 @@ export function CoffeeLiquid({
     progress.current += Math.sign(target - progress.current) * Math.min(Math.abs(target - progress.current), step);
     const p = progress.current;
     m.visible = p > 0.01;
+    // Slosh: the surface lags behind the cup's sway so it stays more level than the cup.
+    m.rotation.z = -(m.parent?.rotation.z ?? 0) * 0.6;
     m.scale.y = Math.max(p, 0.001);
     m.position.y = baseY + (maxHeight / 2) * p;
   });

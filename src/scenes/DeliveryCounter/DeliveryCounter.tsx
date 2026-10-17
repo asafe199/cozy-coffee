@@ -1,3 +1,4 @@
+import { Steam } from '../shared/props/Steam';
 import { SPECS } from '../RecipeStation/specs';
 import { RecipeItemView } from '../RecipeStation/RecipeItemView';
 import { levelConfig } from '../../game/levels';
@@ -59,6 +60,7 @@ function ServedItem({ recipe, prep, x }: { recipe: Recipe; prep: ItemPrep | null
         <group position={[0, 0.02, 0]} scale={1.364}>
           <CoffeeLiquid filled={poured} baseY={0.015} seconds={0} />
         </group>
+        <Steam active={poured} position={[0, 0.16, 0]} />
         {prep?.recipe === 'coffee' && prep.sugarAdded && (
           <mesh position={[0.2, 0.03, 0.05]}>
             <boxGeometry args={[0.06, 0.06, 0.06]} />
