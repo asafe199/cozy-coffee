@@ -24,6 +24,12 @@ export interface Zone {
 export const MACHINE_ZONE: Zone = { id: 'machine', x: -0.61, z: 0.4, radius: 0.3, y: 0.17 };
 export const SUGAR_ZONE: Zone = { id: 'sugar', x: 0.6, z: 0, radius: 0.35 };
 
+// Shared "ready" mark, same spot every station used for its old tap-to-finish
+// button: drop the prepared item here (instead of tapping a button) to send
+// it on to the delivery counter. Dropping here is always accepted — never
+// blocked — same as the tap trigger it replaces.
+export const READY_ZONE: Zone = { id: 'ready', x: 0, z: 0.85, radius: 0.3 };
+
 export function resolveDropZone(
   position: { x: number; z: number },
   zones: Zone[]

@@ -175,6 +175,36 @@ function Barista({ position }: { position: [number, number, number] }) {
   );
 }
 
+const CUSTOMER_SHIRTS = ['#c85c4f', '#8a6fb0', '#d9a768'];
+
+/** A customer waiting in line — same low-poly build as the barista, idly shifting weight. */
+function WaitingCustomer({ position, shirt, phase }: { position: [number, number, number]; shirt: string; phase: number }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = group.current;
+    if (!g) return;
+    const t = clock.getElapsedTime() + phase;
+    g.scale.y = 1 + Math.sin(t * 1.0) * 0.012;
+    g.rotation.y = Math.sin(t * 0.25) * 0.1;
+  });
+  return (
+    <group ref={group} position={position}>
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <cylinderGeometry args={[0.13, 0.15, 0.28, 10]} />
+        <meshStandardMaterial color={shirt} {...mat} />
+      </mesh>
+      <mesh position={[0, 0.48, 0]} castShadow>
+        <sphereGeometry args={[0.085, 14, 10]} />
+        <meshStandardMaterial color="#e8b48a" roughness={0.6} flatShading />
+      </mesh>
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <sphereGeometry args={[0.088, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1]} />
+        <meshStandardMaterial color={NOGUEIRA} {...mat} />
+      </mesh>
+    </group>
+  );
+}
+
 function TipJar({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
@@ -205,17 +235,23 @@ function TipJar({ position }: { position: [number, number, number] }) {
  * Delivery counter: a wide flat counter with a pastry display case, a
  * cloche, a tip jar, and a barista standing behind it — cozy "neighborhood
  * shop" composition (docs/superpowers/specs/2026-10-16-cozy-cafe-design.md,
- * "Fluxo de telas" reference mockups), not a modern POS. The items prepared
- * at the stations are served on it; tapping the counter (or any item)
- * delivers the order (null preps are valid — delivery is never blocked) and
- * returns to the order board.
+ * "Fluxo de telas" reference mockups), not a modern POS. Customers waiting
+ * in the queue stand in front of the counter (one per queued order, capped
+ * at MAX_WAITING_CUSTOMERS). The items prepared at the stations are served
+ * on it; tapping the counter (or any item) delivers the order (null preps
+ * are valid — delivery is never blocked) and returns to the order board.
  */
+// Waiting customers are a visual read of queue length, not every order in
+// it — capped so a long queue doesn't crowd the scene into clutter.
+const MAX_WAITING_CUSTOMERS = 3;
+
 export function DeliveryCounter() {
   const deliverOrder = useGameStore((state) => state.deliverOrder);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
   const currentOrder = useGameStore((state) => state.currentOrder);
   const preps = useGameStore((state) => state.preps);
+  const waitingCount = useGameStore((state) => Math.min(state.queue.length, MAX_WAITING_CUSTOMERS));
 
   const handleDeliver = () => {
     if (isTransitioning) {
@@ -259,6 +295,16 @@ export function DeliveryCounter() {
           recipe={item.recipe}
           prep={preps[i]}
           x={(i - (items.length - 1) / 2) * 0.7}
+        />
+      ))}
+
+      {/* Customers waiting in line, one per queued order (capped). */}
+      {Array.from({ length: waitingCount }, (_, i) => (
+        <WaitingCustomer
+          key={i}
+          position={[(i - (waitingCount - 1) / 2) * 0.55 * s, 0, 1.15 * s]}
+          shirt={CUSTOMER_SHIRTS[i % CUSTOMER_SHIRTS.length]}
+          phase={i * 1.7}
         />
       ))}
     </group>

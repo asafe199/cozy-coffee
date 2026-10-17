@@ -3,21 +3,22 @@ import { levelConfig } from '../../game/levels';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
+import { ReadyMarker } from '../shared/props/ReadyMarker';
 import { ModelParts } from '../shared/props/ModelParts';
 import { RecipeItemView } from './RecipeItemView';
 import { SPECS } from './specs';
+import { READY_ZONE } from '../CoffeeStation/dropZones';
 import type { ExtraRecipe } from '../../game/types';
 
-const AMBAR = '#F3B45A';
-const DISABLED = '#5a5a5a';
 const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
 
 /**
  * Generic station for juice, pancakes and salad: drag the item onto the
  * appliance, tap the appliance to run it, optionally drag the item to the
- * extra (ice / honey / dressing), then tap "done". Like the toast station, the
- * player is never blocked: skipping steps only costs stars in the review, and
- * an untouched station records a null prep.
+ * extra (ice / honey / dressing), then drag it onto the READY_ZONE marker to
+ * send it on. Like the toast station, the player is never blocked: skipping
+ * steps only costs stars in the review, and an untouched station records a
+ * null prep.
  */
 export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
   const spec = SPECS[recipe];
@@ -42,6 +43,16 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
     if (zoneId === spec.extraZone.id) {
       setExtraAdded(true);
     }
+    if (zoneId === READY_ZONE.id) {
+      if (isTransitioning || !isActive) {
+        return;
+      }
+      const start = startRef.current;
+      const next = completeItem(
+        start === null ? null : { recipe, extraAdded, processMs: Date.now() - start },
+      );
+      startTransition(next);
+    }
   };
 
   const handleProcess = () => {
@@ -50,17 +61,6 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
     }
     startRef.current = Date.now();
     setProcessed(true);
-  };
-
-  const handleDone = () => {
-    if (isTransitioning || !isActive) {
-      return;
-    }
-    const start = startRef.current;
-    const next = completeItem(
-      start === null ? null : { recipe, extraAdded, processMs: Date.now() - start },
-    );
-    startTransition(next);
   };
 
   return (
@@ -94,14 +94,11 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
         </group>
       )}
 
-      <CupDraggable onDroppedOn={handleDroppedOn} zones={[spec.applianceZone, spec.extraZone]} y={0.02}>
+      <CupDraggable onDroppedOn={handleDroppedOn} zones={[spec.applianceZone, spec.extraZone, READY_ZONE]} y={0.02}>
         <RecipeItemView spec={spec} processed={processed} extraAdded={extraAdded} offsetY={-0.02} />
       </CupDraggable>
 
-      <mesh position={[0, 0.05, 0.85]} onPointerDown={handleDone}>
-        <boxGeometry args={[0.5, 0.1, 0.25]} />
-        <meshStandardMaterial color={processed ? AMBAR : DISABLED} {...materialProps} />
-      </mesh>
+      <ReadyMarker position={[READY_ZONE.x, 0.06, READY_ZONE.z]} />
     </group>
   );
 }
