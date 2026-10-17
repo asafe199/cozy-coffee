@@ -16,8 +16,10 @@ const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as 
 /**
  * Coffee station scene: the machine (tap once the cup is on MACHINE_ZONE to
  * pour), the sugar packet, the draggable cup, and a "done" trigger that
- * always leaves for the delivery counter, poured or not (an unpoured prep is
- * a valid null input downstream — never a dead end). Local component state
+ * always completes the item, poured or not (an unpoured prep is a valid null
+ * input downstream — never a dead end). completeItem() routes to the next
+ * item's station for multi-item orders, or the delivery counter once the
+ * order is complete. Local component state
  * (poured/cupZone/hasTouchedSugar/entry time) is intentionally not lifted to
  * the store: this component unmounts/remounts fresh every time the player enters/leaves the
  * station (GameScene renders only one scene at a time), which is exactly the

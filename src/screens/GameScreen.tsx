@@ -67,16 +67,15 @@ export function GameScreen() {
       {dayOver && (
         <View style={styles.summaryBackdrop}>
           <View style={styles.summaryCard}>
-            {fontsLoaded && (
-              <>
-                <Text style={styles.summaryTitle}>{`Day ${day} closed`}</Text>
-                <Text style={styles.hudText}>{`Earned: $${dayEarnings}`}</Text>
-                <Text style={styles.hudText}>{`Reviews: ${dayReviews.length} · avg ${averageStars}★`}</Text>
-                <Pressable style={styles.summaryButton} onPress={startNextDay}>
-                  <Text style={styles.summaryButtonText}>Open next day</Text>
-                </Pressable>
-              </>
-            )}
+            {/* Never gate this on fontsLoaded: it's the only way to dismiss
+                this blocking overlay, and the game must never get stuck. RN
+                falls back to the system font if Figtree isn't ready yet. */}
+            <Text style={styles.summaryTitle}>{`Day ${day} closed`}</Text>
+            <Text style={styles.hudText}>{`Earned: $${dayEarnings}`}</Text>
+            <Text style={styles.hudText}>{`Reviews: ${dayReviews.length} · avg ${averageStars}★`}</Text>
+            <Pressable style={styles.summaryButton} onPress={startNextDay}>
+              <Text style={styles.summaryButtonText}>Open next day</Text>
+            </Pressable>
           </View>
         </View>
       )}
