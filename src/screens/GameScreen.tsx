@@ -20,6 +20,13 @@ const CREME = '#F6E3C7';
  * recent review's star count. Font loading only gates the HUD text, not the
  * Canvas — the game is playable even before Figtree finishes loading.
  */
+const HINTS = {
+  orderBoard: 'hintOrderBoard',
+  coffeeStation: 'hintCoffee',
+  toastStation: 'hintToast',
+  deliveryCounter: 'hintDelivery',
+} as const;
+
 export function GameScreen({ onExit }: { onExit?: () => void }) {
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
   useOrderArrivals();
@@ -60,24 +67,25 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       <GameScene />
       <FadeTransition />
       <View style={styles.hud} pointerEvents="none">
-        {fontsLoaded && (
-          <Text style={styles.hudText}>
-            {lastStars ? `${'★'.repeat(lastStars)}${'☆'.repeat(5 - lastStars)}` : 'No reviews yet'}
-          </Text>
-        )}
+        <Text style={styles.hudText}>
+          {lastStars ? `${'★'.repeat(lastStars)}${'☆'.repeat(5 - lastStars)}` : 'No reviews yet'}
+        </Text>
       </View>
       {scene === 'orderBoard' && (
         <View style={styles.orderLabel} pointerEvents="none">
-          {fontsLoaded && <Text style={styles.orderLabelText}>{orderLabel}</Text>}
+          <Text style={styles.orderLabelText}>{orderLabel}</Text>
         </View>
       )}
       {scene === 'orderBoard' && !currentOrder && !dayOver && (
         <OrderQueueOverlay orders={queue} onPick={handlePick} fontLoaded={fontsLoaded} />
       )}
+      {!dayOver && (
+        <View style={styles.hint} pointerEvents="none">
+          <Text style={styles.hintText}>{t(HINTS[scene])}</Text>
+        </View>
+      )}
       <View style={styles.clock} pointerEvents="none">
-        {fontsLoaded && (
-          <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
-        )}
+        <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
       </View>
       {onExit && (
         <Pressable style={styles.menuButton} onPress={onExit}>
@@ -107,6 +115,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  hint: {
+    position: 'absolute',
+    top: 64,
+    left: 24,
+    right: 24,
+    alignItems: 'center',
+    backgroundColor: `${NOGUEIRA}CC`,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  hintText: { color: CREME, fontSize: 15, textAlign: 'center' },
   menuButton: {
     position: 'absolute',
     bottom: 16,
