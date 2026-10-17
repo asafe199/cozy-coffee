@@ -4,6 +4,7 @@ import { generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
 import { Clock, advanceClock, initialClock } from '../game/shift';
 import { orderValue } from '../game/menu';
+import { saveProgress, PersistedProgress } from '../game/persistence';
 
 interface GameState {
   scene: SceneId;
@@ -31,9 +32,10 @@ interface GameActions {
   completeItem: (prep: ItemPrep | null) => SceneId;
   deliverOrder: () => void;
   startNextDay: () => void;
+  hydrateProgress: (data: PersistedProgress) => void;
 }
 
-type GameStore = GameState & GameActions;
+export type GameStore = GameState & GameActions;
 
 export const useGameStore = create<GameStore>((set, get) => ({
   // State
@@ -123,6 +125,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       itemIndex: 0,
       preps: [],
     } as Partial<GameStore>);
+    saveProgress({ day: get().day, money: get().money });
   },
 
   startNextDay: () => {
@@ -136,5 +139,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       dayEarnings: 0,
       dayReviews: [],
     } as Partial<GameStore>);
+    saveProgress({ day: get().day, money: get().money });
+  },
+
+  hydrateProgress: (data: PersistedProgress) => {
+    set({ day: data.day, money: data.money } as Partial<GameStore>);
   },
 }));

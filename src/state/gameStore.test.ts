@@ -1,4 +1,7 @@
-import { useGameStore } from './gameStore';
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+import { useGameStore, GameStore } from './gameStore';
 import { Order } from '../game/types';
 import { initialClock, ORDERS_PER_SHIFT } from '../game/shift';
 
@@ -168,4 +171,36 @@ test('startNextDay resets the day but keeps money and lifetime reviews', () => {
 test('startNextDay is a no-op while the day is still running', () => {
   useGameStore.getState().startNextDay();
   expect(useGameStore.getState().day).toBe(1);
+});
+
+test('hydrateProgress applies a loaded day and money onto the store', () => {
+  useGameStore.getState().hydrateProgress({ day: 5, money: 120 });
+  const s = useGameStore.getState();
+  expect(s.day).toBe(5);
+  expect(s.money).toBe(120);
+});
+
+test('deliverOrder persists the updated day/money', async () => {
+  const saveProgress = jest.spyOn(require('../game/persistence'), 'saveProgress')
+    .mockResolvedValue(undefined);
+  useGameStore.getState().requestNextOrder();
+  useGameStore.getState().beginOrder();
+  useGameStore.getState().deliverOrder();
+  await Promise.resolve(); // let the fire-and-forget save's microtask run
+  expect(saveProgress).toHaveBeenCalledWith({
+    day: useGameStore.getState().day,
+    money: useGameStore.getState().money,
+  });
+});
+
+test('startNextDay persists the updated day', async () => {
+  const saveProgress = jest.spyOn(require('../game/persistence'), 'saveProgress')
+    .mockResolvedValue(undefined);
+  useGameStore.setState({ dayOver: true } as Partial<GameStore>);
+  useGameStore.getState().startNextDay();
+  await Promise.resolve();
+  expect(saveProgress).toHaveBeenCalledWith({
+    day: useGameStore.getState().day,
+    money: useGameStore.getState().money,
+  });
 });
