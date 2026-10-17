@@ -16,7 +16,7 @@ const POSES: Record<SceneId, { position: Vec3; lookAt: Vec3 }> = {
   orderBoard: { position: [0, 0, 2.2], lookAt: [0, 0, 0] },
   coffeeStation: { position: [0, 1.6, 1.8], lookAt: [0, 0, 0] },
   toastStation: { position: [0, 1.6, 1.8], lookAt: [0, 0, 0] },
-  deliveryCounter: { position: [0, 0.8, 1.8], lookAt: [0, 0.3, 0] },
+  deliveryCounter: { position: [0, 1.3, 2.6], lookAt: [0, 0.55, 0] },
 };
 
 /** World-space camera position and look-at target for a scene. */

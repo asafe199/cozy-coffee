@@ -64,6 +64,8 @@ export function CupDraggable({
   const posX = useSharedValue(CUP_ORIGIN.x);
   const posZ = useSharedValue(CUP_ORIGIN.z);
   const rotZ = useSharedValue(0);
+  const posY = useSharedValue(y);
+  const rotX = useSharedValue(0);
   // Previous frame's posX while dragging, used only to diff a per-frame velocity for sway
   // (Task 9). Reset to null whenever dragging stops so the position spring-back's own
   // velocity is never mistaken for drag velocity.
@@ -79,13 +81,13 @@ export function CupDraggable({
 
   // Keeps the callback passed to the canvas-level listener (registered once, see useEffect
   // below) from closing over a stale onDroppedOn/finalize if this component re-renders.
-  const finalizeRef = useRef<(zone: { x: number; z: number; id: string } | null) => void>(
+  const finalizeRef = useRef<(zone: { x: number; z: number; id: string; y?: number; rotX?: number } | null) => void>(
     () => {}
   );
 
   // Shared end-of-drag logic: snap to a zone's center and report it, or spring back to the
   // cup's origin and report null. Used by a clean release and by the lost-capture listener.
-  const finalize = (zone: { x: number; z: number; id: string } | null) => {
+  const finalize = (zone: { x: number; z: number; id: string; y?: number; rotX?: number } | null) => {
     isDragging.current = false;
     capturedTarget.current?.releasePointerCapture(trackedPointerId.current ?? -1);
     capturedTarget.current = null;
@@ -95,10 +97,15 @@ export function CupDraggable({
     // would read as drag velocity and keep the cup swaying instead of leveling out.
     rotZ.value = withSpring(0);
     if (zone) {
+      const z = zone as Zone;
+      posY.value = withSpring(z.y ?? y);
+      rotX.value = withSpring(z.rotX ?? 0);
       posX.value = withSpring(zone.x);
       posZ.value = withSpring(zone.z);
       onDroppedOn(zone.id);
     } else {
+      posY.value = withSpring(y);
+      rotX.value = withSpring(0);
       posX.value = withSpring(CUP_ORIGIN.x);
       posZ.value = withSpring(CUP_ORIGIN.z);
       onDroppedOn(null);
@@ -153,6 +160,8 @@ export function CupDraggable({
     }
     meshRef.current.position.x = posX.value;
     meshRef.current.position.z = posZ.value;
+    meshRef.current.position.y = posY.value;
+    meshRef.current.rotation.x = rotX.value;
 
     // Pendulum sway (Task 9): a pure per-frame diff of position over elapsed time, not
     // anything that infers intent from a lack of events (see the lostpointercapture history
@@ -191,6 +200,9 @@ export function CupDraggable({
         position={[CUP_ORIGIN.x, y, CUP_ORIGIN.z]}
         onPointerDown={(event: ThreeEvent<PointerEvent>) => {
           isDragging.current = true;
+          // Lift off the counter (and out of any slot) while carried.
+          posY.value = withSpring(y + 0.1);
+          rotX.value = withSpring(0);
           // Captures this pointerId to the cup so onPointerMove/onPointerUp keep firing even
           // if the finger strays past the catcher plane's bounds — without this, a release
           // outside any hit-testable geometry would never reach handleUp and strand

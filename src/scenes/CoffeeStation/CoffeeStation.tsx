@@ -2,8 +2,10 @@ import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
 import { CupDraggable } from './CupDraggable';
+import { CoffeeDecor } from '../shared/props/CoffeeDecor';
 import { ModelParts } from '../shared/props/ModelParts';
-import { COFFEE_MACHINE, CUP_COFFEE, CUP_EMPTY } from '../shared/props/models.generated';
+import { CoffeeLiquid, PourStream } from '../shared/props/CoffeeLiquid';
+import { COFFEE_MACHINE, CUP_EMPTY } from '../shared/props/models.generated';
 import { MACHINE_ZONE, SUGAR_ZONE } from './dropZones';
 
 // Direction A "Madeira & Âmbar" palette.
@@ -88,6 +90,8 @@ export function CoffeeStation() {
         <ModelParts data={COFFEE_MACHINE} scale={0.75} />
       </mesh>
 
+      <PourStream active={poured} position={[MACHINE_ZONE.x, 0.4, MACHINE_ZONE.z]} length={0.26} />
+
       {/* Sugar packet, offset beside SUGAR_ZONE's center so the snapped cup
           (which sits exactly at that center) doesn't visually swallow it. */}
       <mesh position={[SUGAR_ZONE.x, 0.03, SUGAR_ZONE.z + 0.25]}>
@@ -95,8 +99,11 @@ export function CoffeeStation() {
         <meshStandardMaterial color={CREME} {...materialProps} />
       </mesh>
 
+      <CoffeeDecor />
+
       <CupDraggable onDroppedOn={handleDroppedOn}>
-        <ModelParts data={poured ? CUP_COFFEE : CUP_EMPTY} scale={0.22} offsetY={-0.06} />
+        <ModelParts data={CUP_EMPTY} scale={0.22} offsetY={-0.06} />
+        <CoffeeLiquid filled={poured} />
       </CupDraggable>
 
       {/* Done trigger: always leaves the station (see handleDone); amber vs.

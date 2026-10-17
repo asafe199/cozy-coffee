@@ -3,6 +3,9 @@ export interface Zone {
   x: number;
   z: number;
   radius: number;
+  // Height and upright tilt (rad, about x) the dropped item settles at; defaults to resting flat.
+  y?: number;
+  rotX?: number;
 }
 
 // Tabletop layout (meters, R3F world space): cup starts at the origin,
@@ -11,7 +14,8 @@ export interface Zone {
 // machine's spout (CoffeeStation.tsx keeps the body/spout meshes at a fixed
 // world position so the cup lands in front of the spout, not inside the
 // machine's solid geometry).
-export const MACHINE_ZONE: Zone = { id: 'machine', x: -0.6, z: 0.45, radius: 0.35 };
+// The cup settles in the machine's drip bay (machine body is at x=-0.6; see CoffeeStation.tsx).
+export const MACHINE_ZONE: Zone = { id: 'machine', x: -0.61, z: 0.14, radius: 0.3, y: 0.17 };
 export const SUGAR_ZONE: Zone = { id: 'sugar', x: 0.6, z: 0, radius: 0.35 };
 
 export function resolveDropZone(

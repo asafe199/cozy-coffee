@@ -27,7 +27,7 @@ const pt = {
   optionsOn: 'Ativadas',
   optionsOff: 'Desativadas',
   hintOrderBoard: 'Toque em um pedido para começar',
-  hintCoffee: 'Arraste o copo até a cafeteira, toque nela para servir e toque no botão âmbar para finalizar',
+  hintCoffee: 'Arraste o copo até a cafeteira, toque nela para servir e toque no botão âmbar para levar ao balcão',
   hintToast: 'Arraste o pão até a torradeira, toque nela para torrar, passe manteiga e toque no botão âmbar',
   hintDelivery: 'Toque no balcão para entregar o pedido',
 };
@@ -64,7 +64,7 @@ const en: Record<StringKey, string> = {
   optionsOn: 'On',
   optionsOff: 'Off',
   hintOrderBoard: 'Tap an order to begin',
-  hintCoffee: 'Drag the cup to the coffee machine, tap it to pour, then tap the amber button to finish',
+  hintCoffee: 'Drag the cup to the coffee machine, tap it to pour, then tap the amber button to take it to the counter',
   hintToast: 'Drag the bread to the toaster, tap it to toast, add butter, then tap the amber button',
   hintDelivery: 'Tap the counter to deliver the order',
 };
@@ -98,7 +98,7 @@ const es: Record<StringKey, string> = {
   optionsOn: 'Activadas',
   optionsOff: 'Desactivadas',
   hintOrderBoard: 'Toca un pedido para empezar',
-  hintCoffee: 'Arrastra la taza a la cafetera, tócala para servir y toca el botón ámbar para terminar',
+  hintCoffee: 'Arrastra la taza a la cafetera, tócala para servir y toca el botón ámbar para llevarla al mostrador',
   hintToast: 'Arrastra el pan a la tostadora, tócala para tostar, añade mantequilla y toca el botón ámbar',
   hintDelivery: 'Toca el mostrador para entregar el pedido',
 };
