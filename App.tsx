@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { MainMenuScreen } from './src/screens/MainMenuScreen';
-import { PlaceholderScreen } from './src/screens/PlaceholderScreen';
+import { InstructionsScreen } from './src/screens/InstructionsScreen';
+import { LevelSelectScreen } from './src/screens/LevelSelectScreen';
+import { GameScreen } from './src/screens/GameScreen';
 import { loadProgress } from './src/game/persistence';
 import { useGameStore } from './src/state/gameStore';
 
-type Screen = 'menu' | 'placeholder';
+type Screen = 'menu' | 'instructions' | 'levels' | 'game';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
@@ -29,11 +31,14 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {screen === 'menu' ? (
-        <MainMenuScreen ready={ready} onStart={() => setScreen('placeholder')} />
-      ) : (
-        <PlaceholderScreen onBack={() => setScreen('menu')} />
+      {screen === 'menu' && <MainMenuScreen ready={ready} onStart={() => setScreen('instructions')} />}
+      {screen === 'instructions' && (
+        <InstructionsScreen onContinue={() => setScreen('levels')} onBack={() => setScreen('menu')} />
       )}
+      {screen === 'levels' && (
+        <LevelSelectScreen onSelectLevel={() => setScreen('game')} onBack={() => setScreen('instructions')} />
+      )}
+      {screen === 'game' && <GameScreen />}
       <StatusBar style="light" />
     </GestureHandlerRootView>
   );

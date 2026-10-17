@@ -9,6 +9,13 @@ jest.mock('./src/game/persistence', () => ({
   loadProgress: jest.fn(),
 }));
 
+jest.mock('./src/screens/GameScreen', () => ({
+  GameScreen: () => {
+    const { Text } = require('react-native');
+    return <Text>GAME</Text>;
+  },
+}));
+
 jest.mock('@expo-google-fonts/figtree', () => ({
   useFonts: () => [false],
   Figtree_600SemiBold: 'x',
@@ -20,7 +27,11 @@ test('hydrates saved progress and navigates menu <-> placeholder', async () => {
   await waitFor(() => expect(useGameStore.getState().day).toBe(5));
   expect(useGameStore.getState().money).toBe(99);
   await fireEvent.press(screen.getByText('Iniciar'));
-  expect(screen.getByText('Coming soon')).toBeTruthy();
-  await fireEvent.press(screen.getByText('Back'));
-  expect(screen.getByText('Iniciar')).toBeTruthy();
+  expect(screen.getByText('Como jogar')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Continuar'));
+  await fireEvent.press(screen.getByText('Voltar'));
+  expect(screen.getByText('Como jogar')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Continuar'));
+  await fireEvent.press(screen.getByText('Nível 1'));
+  expect(screen.getByText('GAME')).toBeTruthy();
 });

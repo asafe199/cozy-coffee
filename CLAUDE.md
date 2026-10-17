@@ -156,8 +156,9 @@ until Task 3 and a final whole-branch review are done
 `docs/superpowers/plans/2026-10-16-brewlight-main-menu.md`. `App.tsx` now
 switches menu/placeholder via `useState` and **hydrates saved progress at
 launch** (this supersedes persistence Task 3's `GameScreen` location).
-Iniciar currently goes to a "Coming soon" placeholder, NOT the game;
-`GameScreen` is not rendered until instructions/level-select exist.
+Flow is now menu → instructions → level select → game
+(`App.tsx`, `useState` switch); only level 1 is selectable, 2-5 show
+"Bloqueado" (no IAP yet). `PlaceholderScreen` is unused but kept. Pending: no way back from game to menu.
 `jest.setup.js` no longer loads the reanimated mock (it broke under
 reanimated 4 + worklets); RNTL v14 `render`/`fireEvent` must be awaited.
 
