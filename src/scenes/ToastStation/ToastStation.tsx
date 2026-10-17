@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
+import { CafeBackdrop } from '../shared/CafeBackdrop';
 import { useSceneCamera } from '../shared/sceneCamera';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
 import { ModelParts } from '../shared/props/ModelParts';
@@ -67,6 +68,7 @@ export function ToastStation() {
 
   return (
     <group>
+      <CafeBackdrop variant="counter" />
       {/* Counter surface */}
       <mesh position={[0, -0.05, 0]}>
         <boxGeometry args={[2.6, 0.1, 2.0]} />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
+import { CafeBackdrop } from '../shared/CafeBackdrop';
 import { useSceneCamera } from '../shared/sceneCamera';
 
 // Direction A "Madeira & Âmbar" palette.
@@ -30,6 +31,7 @@ export function DeliveryCounter() {
 
   return (
     <group>
+      <CafeBackdrop variant="counter" />
       <mesh position={[0, 0.3, 0]} onPointerDown={handleDeliver}>
         <boxGeometry args={[1.4, 0.6, 0.6]} />
         <meshStandardMaterial color={MADEIRA} flatShading roughness={0.8} metalness={0.05} />
