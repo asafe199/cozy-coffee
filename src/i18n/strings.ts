@@ -30,6 +30,14 @@ const pt = {
   hintCoffee: 'Arraste o copo até a cafeteira, toque nela para servir e toque no botão âmbar para levar ao balcão',
   hintToast: 'Arraste o pão até a torradeira, toque nela para torrar, passe manteiga e toque no botão âmbar',
   hintDelivery: 'Toque no balcão para entregar o pedido',
+  hudPending: '{n} pendentes',
+  hudWaiting: 'Aguardando clientes',
+  hudNoReviews: 'Sem avaliações ainda',
+  hudDay: 'Dia {d}',
+  dayClosed: 'Dia {d} encerrado',
+  dayEarned: 'Ganho: ${v}',
+  dayReviews: 'Avaliações: {n} · média {avg}★',
+  nextDay: 'Abrir próximo dia',
 };
 
 export type StringKey = keyof typeof pt;
@@ -67,6 +75,14 @@ const en: Record<StringKey, string> = {
   hintCoffee: 'Drag the cup to the coffee machine, tap it to pour, then tap the amber button to take it to the counter',
   hintToast: 'Drag the bread to the toaster, tap it to toast, add butter, then tap the amber button',
   hintDelivery: 'Tap the counter to deliver the order',
+  hudPending: '{n} pending',
+  hudWaiting: 'Waiting for customers',
+  hudNoReviews: 'No reviews yet',
+  hudDay: 'Day {d}',
+  dayClosed: 'Day {d} closed',
+  dayEarned: 'Earned: ${v}',
+  dayReviews: 'Reviews: {n} · avg {avg}★',
+  nextDay: 'Open next day',
 };
 
 const es: Record<StringKey, string> = {
@@ -101,6 +117,14 @@ const es: Record<StringKey, string> = {
   hintCoffee: 'Arrastra la taza a la cafetera, tócala para servir y toca el botón ámbar para llevarla al mostrador',
   hintToast: 'Arrastra el pan a la tostadora, tócala para tostar, añade mantequilla y toca el botón ámbar',
   hintDelivery: 'Toca el mostrador para entregar el pedido',
+  hudPending: '{n} pendientes',
+  hudWaiting: 'Esperando clientes',
+  hudNoReviews: 'Sin reseñas aún',
+  hudDay: 'Día {d}',
+  dayClosed: 'Día {d} cerrado',
+  dayEarned: 'Ganado: ${v}',
+  dayReviews: 'Reseñas: {n} · media {avg}★',
+  nextDay: 'Abrir el siguiente día',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { pt, en, es };

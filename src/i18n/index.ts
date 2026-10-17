@@ -18,3 +18,7 @@ export function getLang(): Lang {
 export function t(key: StringKey, lang: Lang = current): string {
   return (STRINGS[lang] ?? STRINGS[DEFAULT_LANG])[key] ?? STRINGS[DEFAULT_LANG][key];
 }
+
+export function tf(key: StringKey, vars: Record<string, string | number>): string {
+  return t(key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+}

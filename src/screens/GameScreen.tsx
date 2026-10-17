@@ -1,5 +1,5 @@
 import React from 'react';
-import { t } from '../i18n';
+import { t, tf } from '../i18n';
 import { HintBanner } from './HintBanner';
 import { useSettingsStore } from '../game/settings';
 import { neighborScene } from '../game/navigation';
@@ -56,8 +56,8 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
   const orderLabel = currentOrder
     ? describeOrder(currentOrder)
     : queue.length > 0
-      ? `${queue.length} pending`
-      : 'Waiting for customers';
+      ? tf('hudPending', { n: queue.length })
+      : t('hudWaiting');
 
   const hintsOn = useSettingsStore((state) => state.hints);
   const slide = (dir: -1 | 1) => {
@@ -84,7 +84,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       <FadeTransition />
       <View style={styles.hud} pointerEvents="none">
         <Text style={styles.hudText}>
-          {lastStars ? `${'★'.repeat(lastStars)}${'☆'.repeat(5 - lastStars)}` : 'No reviews yet'}
+          {lastStars ? `${'★'.repeat(lastStars)}${'☆'.repeat(5 - lastStars)}` : t('hudNoReviews')}
         </Text>
       </View>
       {scene === 'orderBoard' && (
@@ -97,7 +97,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       )}
       {hintsOn && !dayOver && <HintBanner text={t(HINTS[scene])} />}
       <View style={styles.clock} pointerEvents="none">
-        <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
+        <Text style={styles.hudText}>{`${tf('hudDay', { d: day })} · ${formatClock(clock.minutes)}`}</Text>
       </View>
       {showArrows && canGo(-1) && (
         <Pressable style={[styles.arrow, styles.arrowLeft]} onPress={() => slide(-1)} hitSlop={12}>
@@ -120,11 +120,11 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
             {/* Never gate this on fontsLoaded: it's the only way to dismiss
                 this blocking overlay, and the game must never get stuck. RN
                 falls back to the system font if Figtree isn't ready yet. */}
-            <Text style={styles.summaryTitle}>{`Day ${day} closed`}</Text>
-            <Text style={styles.hudText}>{`Earned: $${dayEarnings}`}</Text>
-            <Text style={styles.hudText}>{`Reviews: ${dayReviews.length} · avg ${averageStars}★`}</Text>
+            <Text style={styles.summaryTitle}>{tf('dayClosed', { d: day })}</Text>
+            <Text style={styles.hudText}>{tf('dayEarned', { v: dayEarnings })}</Text>
+            <Text style={styles.hudText}>{tf('dayReviews', { n: dayReviews.length, avg: averageStars })}</Text>
             <Pressable style={styles.summaryButton} onPress={startNextDay}>
-              <Text style={styles.summaryButtonText}>Open next day</Text>
+              <Text style={styles.summaryButtonText}>{t('nextDay')}</Text>
             </Pressable>
           </View>
         </View>
