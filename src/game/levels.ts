@@ -6,6 +6,39 @@ export const MAX_LEVEL = 5;
 const UPGRADE_COST = [60, 150, 320, 600]; // cost to go from level N to N+1
 const RECIPES: Recipe[][] = [['coffee'], ['coffee', 'toast'], ['coffee', 'toast'], ['coffee', 'toast'], ['coffee', 'toast']];
 
+export interface LevelTheme {
+  background: string;
+  skyLight: number;
+  sunLight: number;
+}
+
+export interface LevelConfig {
+  ordersPerShift: number;
+  maxItemsPerOrder: number;
+  priceMultiplier: number;
+  theme: LevelTheme;
+}
+
+// Bigger shops serve more customers with bigger orders, but pacing stays calm (no timers).
+const CONFIGS: LevelConfig[] = [
+  { ordersPerShift: 6, maxItemsPerOrder: 1, priceMultiplier: 1, theme: { background: '#2B2729', skyLight: 0xfff1d6, sunLight: 0xffdca0 } },
+  { ordersPerShift: 8, maxItemsPerOrder: 2, priceMultiplier: 1.2, theme: { background: '#2E2927', skyLight: 0xffeccb, sunLight: 0xffd592 } },
+  { ordersPerShift: 10, maxItemsPerOrder: 2, priceMultiplier: 1.45, theme: { background: '#2A2B2E', skyLight: 0xf4efe0, sunLight: 0xffe3b0 } },
+  { ordersPerShift: 12, maxItemsPerOrder: 3, priceMultiplier: 1.75, theme: { background: '#272A30', skyLight: 0xe8ecf5, sunLight: 0xffe8c4 } },
+  { ordersPerShift: 14, maxItemsPerOrder: 3, priceMultiplier: 2.1, theme: { background: '#24232B', skyLight: 0xe2dcf5, sunLight: 0xfff0d6 } },
+];
+
+export function clampLevel(level: number): number {
+  return Math.min(Math.max(Math.trunc(level) || 1, 1), MAX_LEVEL);
+}
+
+export function levelConfig(level: number): LevelConfig {
+  return CONFIGS[clampLevel(level) - 1];
+}
+
+/** Placeholder until the IAP exists: every level is playable. */
+export const FULL_VERSION_UNLOCKED = true;
+
 export function upgradeCost(level: number): number | null {
   return level >= MAX_LEVEL ? null : UPGRADE_COST[level - 1];
 }

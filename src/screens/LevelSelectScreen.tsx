@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { t } from '../i18n';
+import { FULL_VERSION_UNLOCKED } from '../game/levels';
+import { isLevelUnlocked } from '../game/progression';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 
 const LEVELS = [
@@ -14,9 +16,11 @@ const LEVELS = [
 export function LevelSelectScreen({
   onSelectLevel,
   onBack,
+  fullVersion = FULL_VERSION_UNLOCKED,
 }: {
   onSelectLevel: (level: number) => void;
   onBack: () => void;
+  fullVersion?: boolean;
 }) {
   // Font loading never gates rendering; fall back to the system font.
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
@@ -27,7 +31,7 @@ export function LevelSelectScreen({
       <Text style={[styles.title, font]}>{t('levelSelectTitle')}</Text>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
         {LEVELS.map(({ level, key }) => {
-          const unlocked = level === 1;
+          const unlocked = isLevelUnlocked(level, fullVersion);
           return (
             <Pressable
               key={level}

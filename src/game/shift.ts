@@ -22,9 +22,12 @@ export function initialClock(): Clock {
  * shift's orders jumps straight to the next shift (no dead waiting), and
  * finishing the afternoon ends the day.
  */
-export function advanceClock(clock: Clock): { clock: Clock; dayEnded: boolean } {
+export function advanceClock(
+  clock: Clock,
+  ordersPerShift: number = ORDERS_PER_SHIFT,
+): { clock: Clock; dayEnded: boolean } {
   const ordersServed = clock.ordersServed + 1;
-  if (ordersServed < ORDERS_PER_SHIFT) {
+  if (ordersServed < ordersPerShift) {
     return {
       clock: { ...clock, ordersServed, minutes: clock.minutes + MINUTES_PER_ORDER },
       dayEnded: false,

@@ -6,6 +6,7 @@ import { CoffeeStation } from './CoffeeStation/CoffeeStation';
 import { DeliveryCounter } from './DeliveryCounter/DeliveryCounter';
 import { ToastStation } from './ToastStation/ToastStation';
 import { CameraRig } from './shared/CameraRig';
+import { levelConfig } from '../game/levels';
 import { SCENE_X } from './shared/world';
 
 /**
@@ -20,15 +21,16 @@ import { SCENE_X } from './shared/world';
  */
 export function GameScene() {
   const scene = useGameStore((state) => state.scene);
+  const theme = useGameStore((state) => levelConfig(state.level).theme);
   const pendingScene = useGameStore((state) => state.pendingScene);
   const stationKey = useGameStore((state) => `${state.currentOrder?.id ?? 'none'}:${state.itemIndex}`);
 
   return (
     <Canvas>
       {/* Carvão — Direction A's designated scene background. */}
-      <color attach="background" args={['#2B2729']} />
-      <hemisphereLight args={[0xfff1d6, 0x4a3420, 0.6]} />
-      <directionalLight color={0xffdca0} intensity={1.3} position={[5, 7, 4]} />
+      <color attach="background" args={[theme.background]} />
+      <hemisphereLight args={[theme.skyLight, 0x4a3420, 0.6]} />
+      <directionalLight color={theme.sunLight} intensity={1.3} position={[5, 7, 4]} />
       <CameraRig target={pendingScene ?? scene} />
       <group position={[SCENE_X.orderBoard, 0, 0]}>
         <OrderBoard />

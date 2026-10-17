@@ -43,6 +43,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
   const clock = useGameStore((state) => state.clock);
+  const level = useGameStore((state) => state.level);
   const day = useGameStore((state) => state.day);
   const dayOver = useGameStore((state) => state.dayOver);
   const dayEarnings = useGameStore((state) => state.dayEarnings);
@@ -97,7 +98,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       )}
       {hintsOn && !dayOver && <HintBanner text={t(HINTS[scene])} />}
       <View style={styles.clock} pointerEvents="none">
-        <Text style={styles.hudText}>{`${tf('hudDay', { d: day })} · ${formatClock(clock.minutes)}`}</Text>
+        <Text style={styles.hudText}>{`${tf('hudDay', { d: day })} · ${t('levelLabel')} ${level} · ${formatClock(clock.minutes)}`}</Text>
       </View>
       {showArrows && canGo(-1) && (
         <Pressable style={[styles.arrow, styles.arrowLeft]} onPress={() => slide(-1)} hitSlop={12}>

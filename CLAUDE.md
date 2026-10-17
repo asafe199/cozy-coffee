@@ -220,3 +220,7 @@ docs/superpowers/plans/   — implementation plans
 Props (machine, toaster, cup, bread) are Kenney CC0 models baked to TS geometry (`src/scenes/shared/props/`, see `docs/ASSETS.md`). Render with `<ModelParts>`; do not add glTF loaders (RN texture loading is fragile). Visuals are unverified on-device; tune `scale` in the station files.
 
 Scenes live side by side in one world (`src/scenes/shared/world.ts`); `CameraRig` glides the camera to `pendingScene ?? scene`. Stations stay mounted and are keyed by order/item to reset. Do not reintroduce per-scene camera setup.
+
+## Levels (1-5)
+
+`src/game/levels.ts` `levelConfig(level)` drives orders per shift, max items per order, price multiplier and lighting/background theme; `recipesForLevel` gates toast (level 1 = coffee only). `useGameStore.selectLevel` starts a fresh shift. `FULL_VERSION_UNLOCKED = true` is a placeholder until the IAP exists — flip it to gate levels 2-5.

@@ -25,10 +25,15 @@ export function arrivalIntervalMs(minutes: number): number {
  * A new order may arrive only while the board has room and the shift's order
  * budget isn't already spoken for by served + waiting + in-flight orders.
  */
-export function canEnqueue(queueLength: number, hasCurrent: boolean, ordersServed: number): boolean {
+export function canEnqueue(
+  queueLength: number,
+  hasCurrent: boolean,
+  ordersServed: number,
+  ordersPerShift: number = ORDERS_PER_SHIFT,
+): boolean {
   return (
     queueLength < MAX_PENDING_ORDERS &&
-    ordersServed + queueLength + (hasCurrent ? 1 : 0) < ORDERS_PER_SHIFT
+    ordersServed + queueLength + (hasCurrent ? 1 : 0) < ordersPerShift
   );
 }
 

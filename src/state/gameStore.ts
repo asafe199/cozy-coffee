@@ -4,6 +4,7 @@ import { generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
 import { Clock, advanceClock, initialClock } from '../game/shift';
 import { orderValue } from '../game/menu';
+import { clampLevel, levelConfig } from '../game/levels';
 import { canEnqueue, takeFromQueue } from '../game/queue';
 import { saveProgress, PersistedProgress } from '../game/persistence';
 
@@ -25,6 +26,7 @@ interface GameState {
   dayEarnings: number;
   dayReviews: ReviewResult[];
   money: number;
+  level: number;
 }
 
 interface GameActions {
@@ -40,6 +42,8 @@ interface GameActions {
   completeItem: (prep: ItemPrep | null) => SceneId;
   deliverOrder: () => void;
   startNextDay: () => void;
+  /** Starts a fresh shift in the chosen cafe level. */
+  selectLevel: (level: number) => void;
   hydrateProgress: (data: PersistedProgress) => void;
 }
 
@@ -62,11 +66,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dayEarnings: 0,
   dayReviews: [],
   money: 0,
+  level: 1,
 
   // Actions
   requestNextOrder: () => {
     set({
-      currentOrder: generateOrder(),
+      currentOrder: generateOrder(Math.random, get().level),
       itemIndex: 0,
       preps: [],
     } as Partial<GameStore>);
@@ -74,10 +79,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   enqueueOrder: () => {
     const state = get();
-    if (state.dayOver || !canEnqueue(state.queue.length, state.currentOrder !== null, state.clock.ordersServed)) {
+    if (state.dayOver || !canEnqueue(state.queue.length, state.currentOrder !== null, state.clock.ordersServed, levelConfig(state.level).ordersPerShift)) {
       return;
     }
-    set({ queue: [...state.queue, generateOrder()] } as Partial<GameStore>);
+    set({ queue: [...state.queue, generateOrder(Math.random, state.level)] } as Partial<GameStore>);
   },
 
   beginOrder: (orderId?: string) => {
@@ -142,8 +147,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return; // no-op if there's no order to deliver
     }
     const review = calculateReview(state.currentOrder, state.preps);
-    const earned = orderValue(state.currentOrder);
-    const { clock, dayEnded } = advanceClock(state.clock);
+    const earned = orderValue(state.currentOrder, levelConfig(state.level).priceMultiplier);
+    const { clock, dayEnded } = advanceClock(state.clock, levelConfig(state.level).ordersPerShift);
     set({
       reviews: [...state.reviews, review],
       dayReviews: [...state.dayReviews, review],
@@ -171,6 +176,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       queue: [],
     } as Partial<GameStore>);
     saveProgress({ day: get().day, money: get().money });
+  },
+
+  selectLevel: (level: number) => {
+    set({
+      level: clampLevel(level),
+      scene: 'orderBoard',
+      isTransitioning: false,
+      pendingScene: null,
+      currentOrder: null,
+      queue: [],
+      itemIndex: 0,
+      preps: [],
+      clock: initialClock(),
+      dayOver: false,
+      dayEarnings: 0,
+      dayReviews: [],
+    } as Partial<GameStore>);
   },
 
   hydrateProgress: (data: PersistedProgress) => {

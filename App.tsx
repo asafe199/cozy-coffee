@@ -45,7 +45,10 @@ export default function App() {
         <InstructionsScreen onContinue={() => setScreen('levels')} onBack={() => setScreen('menu')} />
       )}
       {screen === 'levels' && (
-        <LevelSelectScreen onSelectLevel={() => setScreen('game')} onBack={() => setScreen('instructions')} />
+        <LevelSelectScreen onSelectLevel={(level) => {
+            useGameStore.getState().selectLevel(level);
+            setScreen('game');
+          }} onBack={() => setScreen('instructions')} />
       )}
       {screen === 'game' && <GameScreen onExit={() => setScreen('menu')} />}
       </React.Fragment>
