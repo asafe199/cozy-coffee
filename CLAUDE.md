@@ -115,32 +115,69 @@ back to order board — for a single recipe (coffee). Low-poly 3D visual
 style, Madeira & Âmbar color/typography direction, drag-sway "juice"
 physics. Plan: `docs/superpowers/plans/2026-10-16-brewlight-core-loop-vertical-slice.md`
 
-**Added later (outside this plan, via GitHub Copilot on a different
-machine — not yet code-reviewed as of this writing):**
+**Added later (outside the original plan, via GitHub Copilot on a different
+machine) — reviewed, 2 real bugs found and fixed:**
 - A second recipe: toast (`ToastStation`, `GRIDDLE_ZONE`, `BUTTER_ZONE`,
   `TOAST_MIN_MS`, `TOAST_BURN_THRESHOLD_MS`)
 - Multi-item orders with per-item review (`OrderItem`, `Recipe`)
 - Shifts/day structure: `ShiftId`, `Clock`, `ORDERS_PER_SHIFT`
 - Economy: `ITEM_PRICES`, `orderValue`, `stationForItem`
 - A fix for a Metro/Hermes crash (`three` ESM resolution)
-- The generated `android/` native project got committed (this is
-  intentional now, since EAS Build benefits from having it present rather
-  than regenerating via prebuild each time — just remember lesson 3's
-  gotcha about stale local `android/build/` cruft)
+- The generated `android/` native project got committed (intentional —
+  EAS Build benefits from having it present; remember lesson 3's gotcha
+  about stale local `android/build/` cruft)
+- Fixed: the day-closed summary's only dismiss button was gated behind
+  font-loading, which could soft-lock the game — now always renders.
+- Fixed: delivering the day's last order used to silently pre-generate a
+  "day 2" order before the summary was dismissed — now skipped when
+  `dayOver` is true.
+- Shift constant: `ORDERS_PER_SHIFT` was Copilot's `4`, corrected to
+  **`10`** to match the design doc's "~10 pedidos no máximo por turno".
 
-A code review of everything in the second bullet is in progress / may
-already be done by the time you read this — check for a recent commit or
-ask the human partner for the findings if unclear.
+**EAS Build / dev-client pipeline is set up and confirmed working**
+(account `stackoverlflow`, project `brewlight-scaffold`). A dev-client APK
+has been built in the cloud, installed on an emulator via `adb`, and the
+app has been confirmed actually running — not just building — with
+Reanimated 4 functioning. This was the hard part; see "Hard-won lessons."
 
-## Not yet done (per the original design doc's scope)
+**Local persistence (day/money survive app restart) — in progress, THIS
+worktree, not yet merged to main:** plan at
+`docs/superpowers/plans/2026-10-16-brewlight-local-persistence.md`.
+Task 1 (persistence module) and Task 2 (store wiring) are done and
+reviewed clean. **Task 3 (hydrate on app launch, in `GameScreen.tsx`) has
+NOT been started.** The ledger at
+`.superpowers/sdd/2026-10-16-brewlight-local-persistence/progress.md` has
+the exact resume point. Do not re-do Tasks 1-2; do not merge this worktree
+until Task 3 and a final whole-branch review are done
+(`superpowers:subagent-driven-development` process).
 
-Progression/leveling (5 levels), equipment upgrades, 3 languages (PT/EN/ES
-— currently English-only strings), audio (direction decided: lofi,
-royalty-free — not sourced yet), persistence (local-only, not yet wired),
-monetization/IAP (free download, level 1 free, IAP unlocks the rest — not
-yet implemented). The shifts/economy/toast work above is a step toward some
-of this but wasn't planned through the same brainstorm→plan→review process
-as the vertical slice — worth reconciling with the original design doc.
+**New design requirements dictated 2026-10-16, in this worktree's design
+doc but NOT YET MERGED to main** (`docs/superpowers/specs/2026-10-16-cozy-cafe-design.md`,
+sections "Fluxo de telas" and "Cardápio expandido"): a main menu (game
+name, color palette, Iniciar/Salvar/Sair), an instructions screen, a
+level-select screen (5 level thumbnails, simple café → sophisticated café,
+level 1 unlocked / 2-5 locked behind the paywall), then into the existing
+gameplay loop. Plus more recipe types eventually (juice, salad, etc. —
+exact list still open).
+
+## Not yet done (per the design doc's scope)
+
+In priority/dependency order for the next session to pick up:
+1. **Finish the local persistence plan** (Task 3 above, then its final
+   review, then merge this worktree).
+2. **Progression/leveling** (5 levels, equipment/recipe unlocks, paywall
+   at level 1→2) — no plan written yet.
+3. **Main menu + instructions + level-select screens** — requirements
+   captured above, no plan written yet. Depends on persistence (to know
+   what to show for "Continuar") and progression (to know which levels are
+   unlocked).
+4. **3 languages** (PT/EN/ES) — currently English-only strings, no i18n
+   wiring yet.
+5. **Audio** — direction decided (lofi, royalty-free), not sourced/wired.
+6. **Monetization/IAP** — free download, level 1 free, single IAP unlocks
+   levels 2-5. Not implemented; depends on progression.
+7. **Expanded recipes** (juice, salad, etc.) beyond coffee/toast — exact
+   list still open, same station+preparo pattern as existing recipes.
 
 ## Project structure
 
