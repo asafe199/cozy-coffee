@@ -1,3 +1,4 @@
+import { levelConfig } from '../../game/levels';
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { ItemPrep } from '../../game/types';
@@ -7,7 +8,6 @@ import { CoffeeLiquid } from '../shared/props/CoffeeLiquid';
 import { BREAD, CUP_EMPTY } from '../shared/props/models.generated';
 
 // Direction A "Madeira & Âmbar" palette.
-const MADEIRA = '#6B4226';
 const NOGUEIRA = '#4A2F1F';
 const TOP = '#B07A3A';
 const CREME = '#F6E3C7';
@@ -174,28 +174,31 @@ export function DeliveryCounter() {
   };
 
   const items = currentOrder?.items ?? [];
+  const level = useGameStore((state) => state.level);
+  const { tableScale: s, tableColor } = levelConfig(level);
+  const planks = Math.round(12 * s);
 
   return (
     <group>
       {/* Counter body, front planks and top slab */}
       <mesh position={[0, 0.37, 0]} onPointerDown={handleDeliver}>
-        <boxGeometry args={[3.6, 0.74, 1.0]} />
-        <meshStandardMaterial color={MADEIRA} {...mat} />
+        <boxGeometry args={[3.6 * s, 0.74, 1.0 * s]} />
+        <meshStandardMaterial color={tableColor} {...mat} />
       </mesh>
-      {Array.from({ length: 12 }, (_, i) => (
-        <mesh key={i} position={[-1.65 + i * 0.3, 0.37, 0.505]}>
+      {Array.from({ length: planks }, (_, i) => (
+        <mesh key={i} position={[(-1.65 + (i * 3.3) / (planks - 1)) * s, 0.37, 0.505 * s]}>
           <boxGeometry args={[0.02, 0.66, 0.01]} />
           <meshStandardMaterial color={NOGUEIRA} {...mat} />
         </mesh>
       ))}
       <mesh position={[0, 0.76, 0]} onPointerDown={handleDeliver}>
-        <boxGeometry args={[3.8, 0.04, 1.1]} />
+        <boxGeometry args={[3.8 * s, 0.04, 1.1 * s]} />
         <meshStandardMaterial color={TOP} {...mat} />
       </mesh>
 
-      <Computer position={[-1.3, TOP_Y, -0.2]} />
-      <CashRegister position={[1.25, TOP_Y, -0.2]} />
-      <TipJar position={[0.7, TOP_Y, -0.3]} />
+      <Computer position={[-1.3 * s, TOP_Y, -0.2]} />
+      <CashRegister position={[1.25 * s, TOP_Y, -0.2]} />
+      <TipJar position={[0.7 * s, TOP_Y, -0.3]} />
 
       {items.map((item, i) => (
         <ServedItem

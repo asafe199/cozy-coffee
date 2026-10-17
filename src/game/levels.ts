@@ -16,16 +16,20 @@ export interface LevelConfig {
   ordersPerShift: number;
   maxItemsPerOrder: number;
   priceMultiplier: number;
+  /** Table/counter footprint multiplier: fancier cafes have bigger tables. */
+  tableScale: number;
+  /** Table top color: plain wood at level 1 up to polished walnut. */
+  tableColor: string;
   theme: LevelTheme;
 }
 
 // Bigger shops serve more customers with bigger orders, but pacing stays calm (no timers).
 const CONFIGS: LevelConfig[] = [
-  { ordersPerShift: 6, maxItemsPerOrder: 1, priceMultiplier: 1, theme: { background: '#2B2729', skyLight: 0xfff1d6, sunLight: 0xffdca0 } },
-  { ordersPerShift: 8, maxItemsPerOrder: 2, priceMultiplier: 1.2, theme: { background: '#2E2927', skyLight: 0xffeccb, sunLight: 0xffd592 } },
-  { ordersPerShift: 10, maxItemsPerOrder: 2, priceMultiplier: 1.45, theme: { background: '#2A2B2E', skyLight: 0xf4efe0, sunLight: 0xffe3b0 } },
-  { ordersPerShift: 12, maxItemsPerOrder: 3, priceMultiplier: 1.75, theme: { background: '#272A30', skyLight: 0xe8ecf5, sunLight: 0xffe8c4 } },
-  { ordersPerShift: 14, maxItemsPerOrder: 3, priceMultiplier: 2.1, theme: { background: '#24232B', skyLight: 0xe2dcf5, sunLight: 0xfff0d6 } },
+  { ordersPerShift: 6, maxItemsPerOrder: 1, priceMultiplier: 1, tableScale: 1, tableColor: '#6B4226', theme: { background: '#2B2729', skyLight: 0xfff1d6, sunLight: 0xffdca0 } },
+  { ordersPerShift: 8, maxItemsPerOrder: 2, priceMultiplier: 1.2, tableScale: 1.1, tableColor: '#69402A', theme: { background: '#2E2927', skyLight: 0xffeccb, sunLight: 0xffd592 } },
+  { ordersPerShift: 10, maxItemsPerOrder: 2, priceMultiplier: 1.45, tableScale: 1.2, tableColor: '#5C3A25', theme: { background: '#2A2B2E', skyLight: 0xf4efe0, sunLight: 0xffe3b0 } },
+  { ordersPerShift: 12, maxItemsPerOrder: 3, priceMultiplier: 1.75, tableScale: 1.3, tableColor: '#4F3222', theme: { background: '#272A30', skyLight: 0xe8ecf5, sunLight: 0xffe8c4 } },
+  { ordersPerShift: 14, maxItemsPerOrder: 3, priceMultiplier: 2.1, tableScale: 1.4, tableColor: '#432A1D', theme: { background: '#24232B', skyLight: 0xe2dcf5, sunLight: 0xfff0d6 } },
 ];
 
 export function clampLevel(level: number): number {

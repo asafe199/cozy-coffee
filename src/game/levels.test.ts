@@ -26,3 +26,9 @@ test('every level has a config and orders grow with level', () => {
   expect(clampLevel(99)).toBe(MAX_LEVEL);
   expect(clampLevel(0)).toBe(1);
 });
+
+test('tables grow with the level', () => {
+  for (let l = 2; l <= MAX_LEVEL; l++) {
+    expect(levelConfig(l).tableScale).toBeGreaterThan(levelConfig(l - 1).tableScale);
+  }
+});

@@ -1,3 +1,4 @@
+import { levelConfig } from '../../game/levels';
 import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
@@ -9,7 +10,6 @@ import { COFFEE_MACHINE, CUP_EMPTY } from '../shared/props/models.generated';
 import { MACHINE_ZONE, SUGAR_ZONE } from './dropZones';
 
 // Direction A "Madeira & Âmbar" palette.
-const MADEIRA = '#6B4226';
 const AMBAR = '#F3B45A';
 const CREME = '#F6E3C7';
 const DISABLED = '#5a5a5a';
@@ -32,6 +32,8 @@ export function CoffeeStation() {
   const completeItem = useGameStore((state) => state.completeItem);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
+  const level = useGameStore((state) => state.level);
+  const { tableScale, tableColor } = levelConfig(level);
   // Done only counts at the station the current item belongs to (the player can pan anywhere).
   const isActive = useGameStore(
     (state) =>
@@ -79,8 +81,8 @@ export function CoffeeStation() {
     <group>
       {/* Counter surface */}
       <mesh position={[0, -0.05, 0]}>
-        <boxGeometry args={[2.6, 0.1, 2.0]} />
-        <meshStandardMaterial color={MADEIRA} {...materialProps} />
+        <boxGeometry args={[2.6 * tableScale, 0.1, 2.0 * tableScale]} />
+        <meshStandardMaterial color={tableColor} {...materialProps} />
       </mesh>
 
       {/* Coffee machine model (Kenney, CC0); tap it to pour once the cup is on
