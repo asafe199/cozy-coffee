@@ -11,8 +11,8 @@ const orders: Order[] = [
 test('shows each pending order and lets the player pick any of them', async () => {
   const onPick = jest.fn();
   await render(<OrderQueueOverlay orders={orders} onPick={onPick} />);
-  expect(screen.getByText('Coffee with sugar')).toBeTruthy();
-  await fireEvent.press(screen.getByText('Toast'));
+  expect(screen.getByText('Café com açúcar')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Torrada'));
   expect(onPick).toHaveBeenCalledWith('b');
 });
 

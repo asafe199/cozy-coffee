@@ -16,12 +16,21 @@ export function generateOrder(rng: () => number = Math.random): Order {
   };
 }
 
-export function describeOrder(order: Order): string {
+export type OrderWords = { coffee: string; toast: string; withSugar: string; withButter: string };
+
+const EN_WORDS: OrderWords = {
+  coffee: 'Coffee',
+  toast: 'Toast',
+  withSugar: ' with sugar',
+  withButter: ' with butter',
+};
+
+export function describeOrder(order: Order, w: OrderWords = EN_WORDS): string {
   return order.items
     .map((item) =>
       item.recipe === 'coffee'
-        ? `Coffee${item.wantsSugar ? ' with sugar' : ''}`
-        : `Toast${item.wantsButter ? ' with butter' : ''}`,
+        ? `${w.coffee}${item.wantsSugar ? w.withSugar : ''}`
+        : `${w.toast}${item.wantsButter ? w.withButter : ''}`,
     )
     .join(' + ');
 }

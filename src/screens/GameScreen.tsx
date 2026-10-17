@@ -1,5 +1,5 @@
 import React from 'react';
-import { t, tf } from '../i18n';
+import { t, tf, orderWords } from '../i18n';
 import { HintBanner } from './HintBanner';
 import { useSettingsStore } from '../game/settings';
 import { neighborScene } from '../game/navigation';
@@ -54,7 +54,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
     : '–';
 
   const orderLabel = currentOrder
-    ? describeOrder(currentOrder)
+    ? describeOrder(currentOrder, orderWords())
     : queue.length > 0
       ? tf('hudPending', { n: queue.length })
       : t('hudWaiting');

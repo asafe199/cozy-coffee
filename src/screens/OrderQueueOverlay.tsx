@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Order } from '../game/types';
+import { orderWords } from '../i18n';
 import { describeOrder } from '../game/orders';
 
 const NOGUEIRA = '#4A2F1F';
@@ -29,7 +30,7 @@ export function OrderQueueOverlay({
       {orders.map((order, index) => (
         <Pressable key={order.id} style={styles.card} onPress={() => onPick(order.id)}>
           <Text style={[styles.number, font]}>{index + 1}</Text>
-          <Text style={[styles.text, font]}>{describeOrder(order)}</Text>
+          <Text style={[styles.text, font]}>{describeOrder(order, orderWords())}</Text>
         </Pressable>
       ))}
     </View>

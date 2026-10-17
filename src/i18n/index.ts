@@ -22,3 +22,12 @@ export function t(key: StringKey, lang: Lang = current): string {
 export function tf(key: StringKey, vars: Record<string, string | number>): string {
   return t(key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 }
+
+export function orderWords() {
+  return {
+    coffee: t('wordCoffee'),
+    toast: t('wordToast'),
+    withSugar: t('wordWithSugar'),
+    withButter: t('wordWithButter'),
+  };
+}
