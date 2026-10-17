@@ -7,7 +7,15 @@ import { DeliveryCounter } from './DeliveryCounter/DeliveryCounter';
 import { ToastStation } from './ToastStation/ToastStation';
 import { CameraRig } from './shared/CameraRig';
 import { levelConfig } from '../game/levels';
-import { SCENE_X } from './shared/world';
+import { RecipeStation } from './RecipeStation/RecipeStation';
+import { sceneX } from './shared/world';
+import type { ExtraRecipe, SceneId } from '../game/types';
+
+const EXTRA_STATIONS: { scene: SceneId; recipe: ExtraRecipe }[] = [
+  { scene: 'juiceStation', recipe: 'juice' },
+  { scene: 'pancakeStation', recipe: 'pancakes' },
+  { scene: 'saladStation', recipe: 'salad' },
+];
 
 /**
  * The <Canvas> root rendered by GameScreen (Task 8). Lighting matches the
@@ -21,6 +29,7 @@ import { SCENE_X } from './shared/world';
  */
 export function GameScene() {
   const scene = useGameStore((state) => state.scene);
+  const level = useGameStore((state) => state.level);
   const theme = useGameStore((state) => levelConfig(state.level).theme);
   const pendingScene = useGameStore((state) => state.pendingScene);
   const stationKey = useGameStore((state) => `${state.currentOrder?.id ?? 'none'}:${state.itemIndex}`);
@@ -31,19 +40,24 @@ export function GameScene() {
       <color attach="background" args={[theme.background]} />
       <hemisphereLight args={[theme.skyLight, 0x4a3420, 0.6]} />
       <directionalLight color={theme.sunLight} intensity={1.3} position={[5, 7, 4]} />
-      <CameraRig target={pendingScene ?? scene} />
-      <group position={[SCENE_X.orderBoard, 0, 0]}>
+      <CameraRig target={pendingScene ?? scene} level={level} />
+      <group position={[sceneX('orderBoard', level), 0, 0]}>
         <OrderBoard />
       </group>
       {/* Stations stay mounted so the camera can glide between them; keying on
           the order/item resets their local state for each new task. */}
-      <group position={[SCENE_X.coffeeStation, 0, 0]}>
+      <group position={[sceneX('coffeeStation', level), 0, 0]}>
         <CoffeeStation key={stationKey} />
       </group>
-      <group position={[SCENE_X.toastStation, 0, 0]}>
+      <group position={[sceneX('toastStation', level), 0, 0]}>
         <ToastStation key={stationKey} />
       </group>
-      <group position={[SCENE_X.deliveryCounter, 0, 0]}>
+      {EXTRA_STATIONS.map(({ scene: id, recipe }) => (
+        <group key={id} position={[sceneX(id, level), 0, 0]}>
+          <RecipeStation key={stationKey} recipe={recipe} />
+        </group>
+      ))}
+      <group position={[sceneX('deliveryCounter', level), 0, 0]}>
         <DeliveryCounter />
       </group>
     </Canvas>

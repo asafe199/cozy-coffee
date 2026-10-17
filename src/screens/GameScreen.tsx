@@ -28,6 +28,9 @@ const HINTS = {
   orderBoard: 'hintOrderBoard',
   coffeeStation: 'hintCoffee',
   toastStation: 'hintToast',
+  juiceStation: 'hintJuice',
+  pancakeStation: 'hintPancakes',
+  saladStation: 'hintSalad',
   deliveryCounter: 'hintDelivery',
 } as const;
 
@@ -62,7 +65,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
 
   const hintsOn = useSettingsStore((state) => state.hints);
   const slide = (dir: -1 | 1) => {
-    const target = neighborScene(scene, dir);
+    const target = neighborScene(scene, dir, level);
     if (target && !isTransitioning) {
       startTransition(target, dir);
     }
@@ -70,7 +73,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
   const showArrows = !dayOver;
   // Moving right from the board only makes sense once an order has been picked.
   const canGo = (dir: -1 | 1) =>
-    !!neighborScene(scene, dir) && !(scene === 'orderBoard' && dir === 1 && !currentOrder);
+    !!neighborScene(scene, dir, level) && !(scene === 'orderBoard' && dir === 1 && !currentOrder);
 
   const handlePick = (orderId: string) => {
     if (isTransitioning) {

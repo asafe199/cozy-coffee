@@ -1,4 +1,4 @@
-import { describeOrder, generateOrder } from './orders';
+import { describeOrder, generateOrder, stationForItem } from './orders';
 
 test('level 1 only ever asks for a single coffee', () => {
   for (const r of [0.1, 0.5, 0.9]) {
@@ -41,4 +41,17 @@ test('describeOrder lists items with their options', () => {
       ],
     }),
   ).toBe('Coffee with sugar + Toast');
+});
+
+test('level 5 orders can include every recipe and route to their stations', () => {
+  const seen = new Set<string>();
+  for (let i = 0; i < 400; i++) {
+    for (const item of generateOrder(Math.random, 5).items) seen.add(item.recipe);
+  }
+  expect([...seen].sort()).toEqual(['coffee', 'juice', 'pancakes', 'salad', 'toast']);
+  expect(stationForItem({ recipe: 'salad', wantsExtra: true })).toBe('saladStation');
+});
+
+test('describeOrder names the extras', () => {
+  expect(describeOrder({ id: 'x', items: [{ recipe: 'pancakes', wantsExtra: true }] })).toBe('Pancakes with honey');
 });

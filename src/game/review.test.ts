@@ -84,3 +84,19 @@ test('a mismatched prep type is treated as never prepared', () => {
   const result = calculateReview(comboOrder, [goodToast, goodCoffee]);
   expect(result.comments).toContain('order_never_prepared');
 });
+
+test('juice without the requested ice loses a star', () => {
+  const order = { id: 'j', items: [{ recipe: 'juice' as const, wantsExtra: true }] };
+  expect(calculateReview(order, [{ recipe: 'juice', extraAdded: true, processMs: 2000 }]).stars).toBe(5);
+  const r = calculateReview(order, [{ recipe: 'juice', extraAdded: false, processMs: 2000 }]);
+  expect(r.stars).toBe(4);
+  expect(r.comments).toContain('missing_ice');
+});
+
+test('pancakes can be raw or burned, juice and salad have no timing', () => {
+  const pancakes = { id: 'p', items: [{ recipe: 'pancakes' as const, wantsExtra: false }] };
+  expect(calculateReview(pancakes, [{ recipe: 'pancakes', extraAdded: false, processMs: 100 }]).comments).toContain('raw_pancakes');
+  expect(calculateReview(pancakes, [{ recipe: 'pancakes', extraAdded: false, processMs: 20000 }]).comments).toContain('burned_pancakes');
+  const salad = { id: 's', items: [{ recipe: 'salad' as const, wantsExtra: false }] };
+  expect(calculateReview(salad, [{ recipe: 'salad', extraAdded: false, processMs: 20000 }]).stars).toBe(5);
+});

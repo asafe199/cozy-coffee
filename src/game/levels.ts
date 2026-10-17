@@ -4,7 +4,13 @@ export const MAX_LEVEL = 5;
 
 // Builder-chosen values (spec leaves them open). Index = level - 1.
 const UPGRADE_COST = [60, 150, 320, 600]; // cost to go from level N to N+1
-const RECIPES: Recipe[][] = [['coffee'], ['coffee', 'toast'], ['coffee', 'toast'], ['coffee', 'toast'], ['coffee', 'toast']];
+const RECIPES: Recipe[][] = [
+  ['coffee'],
+  ['coffee', 'toast'],
+  ['coffee', 'toast', 'juice'],
+  ['coffee', 'toast', 'juice', 'pancakes'],
+  ['coffee', 'toast', 'juice', 'pancakes', 'salad'],
+];
 
 export interface LevelTheme {
   background: string;

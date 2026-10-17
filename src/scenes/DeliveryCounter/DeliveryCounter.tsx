@@ -1,7 +1,9 @@
+import { SPECS } from '../RecipeStation/specs';
+import { RecipeItemView } from '../RecipeStation/RecipeItemView';
 import { levelConfig } from '../../game/levels';
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
-import { ItemPrep } from '../../game/types';
+import { ItemPrep, Recipe } from '../../game/types';
 import { TOAST_BURN_THRESHOLD_MS, TOAST_MIN_MS } from '../../game/review';
 import { ModelParts } from '../shared/props/ModelParts';
 import { CoffeeLiquid } from '../shared/props/CoffeeLiquid';
@@ -20,7 +22,28 @@ function toastTint(prep: ItemPrep | null | undefined): string {
   return prep.toastedMs >= TOAST_BURN_THRESHOLD_MS ? '#3a2418' : '#8a5a3a';
 }
 
-function ServedItem({ recipe, prep, x }: { recipe: 'coffee' | 'toast'; prep: ItemPrep | null | undefined; x: number }) {
+function ServedItem({ recipe, prep, x }: { recipe: Recipe; prep: ItemPrep | null | undefined; x: number }) {
+  if (recipe !== 'coffee' && recipe !== 'toast') {
+    const spec = SPECS[recipe];
+    const extraPrep = prep && prep.recipe === recipe && 'extraAdded' in prep ? prep : null;
+    return (
+      <group position={[x, TOP_Y, 0.2]}>
+        <mesh position={[0, 0.01, 0]}>
+          <cylinderGeometry args={[0.2, 0.2, 0.02, 18]} />
+          <meshStandardMaterial color={CREME} {...mat} />
+        </mesh>
+        <mesh position={[0, 0.02, 0]}>
+          <RecipeItemView
+            spec={spec}
+            processed={extraPrep !== null}
+            extraAdded={extraPrep?.extraAdded ?? false}
+            size={1.3}
+            fillSeconds={0}
+          />
+        </mesh>
+      </group>
+    );
+  }
   if (recipe === 'coffee') {
     const poured = prep?.recipe === 'coffee';
     return (

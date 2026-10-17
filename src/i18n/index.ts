@@ -1,5 +1,6 @@
 import { STRINGS } from './strings';
 import type { Lang, StringKey } from './strings';
+import type { OrderWords } from '../game/orders';
 
 export type { Lang, StringKey };
 
@@ -23,11 +24,21 @@ export function tf(key: StringKey, vars: Record<string, string | number>): strin
   return t(key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function orderWords() {
+export function orderWords(): OrderWords {
   return {
-    coffee: t('wordCoffee'),
-    toast: t('wordToast'),
-    withSugar: t('wordWithSugar'),
-    withButter: t('wordWithButter'),
+    names: {
+      coffee: t('wordCoffee'),
+      toast: t('wordToast'),
+      juice: t('wordJuice'),
+      pancakes: t('wordPancakes'),
+      salad: t('wordSalad'),
+    },
+    extras: {
+      coffee: t('wordWithSugar'),
+      toast: t('wordWithButter'),
+      juice: t('wordWithIce'),
+      pancakes: t('wordWithHoney'),
+      salad: t('wordWithDressing'),
+    },
   };
 }

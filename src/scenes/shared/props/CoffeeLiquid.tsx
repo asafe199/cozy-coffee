@@ -12,10 +12,20 @@ interface CoffeeLiquidProps {
   baseY?: number;
   // Seconds to fill; 0 jumps straight to full (for already-served cups).
   seconds?: number;
+  color?: string;
+  radius?: number;
+  maxHeight?: number;
 }
 
 /** Coffee surface rising inside a cup; render as a child of the cup mesh. */
-export function CoffeeLiquid({ filled, baseY = -0.045, seconds = 1.4 }: CoffeeLiquidProps) {
+export function CoffeeLiquid({
+  filled,
+  baseY = -0.045,
+  seconds = 1.4,
+  color = COFFEE_COLOR,
+  radius = RADIUS,
+  maxHeight = MAX_HEIGHT,
+}: CoffeeLiquidProps) {
   const ref = useRef<THREE.Mesh>(null);
   const progress = useRef(filled && seconds === 0 ? 1 : 0);
   useFrame((_s, delta) => {
@@ -27,12 +37,12 @@ export function CoffeeLiquid({ filled, baseY = -0.045, seconds = 1.4 }: CoffeeLi
     const p = progress.current;
     m.visible = p > 0.01;
     m.scale.y = Math.max(p, 0.001);
-    m.position.y = baseY + (MAX_HEIGHT / 2) * p;
+    m.position.y = baseY + (maxHeight / 2) * p;
   });
   return (
     <mesh ref={ref} visible={false}>
-      <cylinderGeometry args={[RADIUS, RADIUS * 0.9, MAX_HEIGHT, 14]} />
-      <meshStandardMaterial color={COFFEE_COLOR} roughness={0.3} />
+      <cylinderGeometry args={[radius, radius * 0.9, maxHeight, 14]} />
+      <meshStandardMaterial color={color} roughness={0.3} />
     </mesh>
   );
 }

@@ -4,6 +4,7 @@ export const PREP_TIME_THRESHOLD_MS = 8000;
 export const TOAST_MIN_MS = 1500;
 export const TOAST_BURN_THRESHOLD_MS = 9000;
 const UNPREPARED_PENALTY = 4;
+const EXTRA_NAME = { juice: 'ice', pancakes: 'honey', salad: 'dressing' } as const;
 
 export function calculateReview(order: Order, preps: (ItemPrep | null)[]): ReviewResult {
   let stars = 5;
@@ -37,6 +38,21 @@ export function calculateReview(order: Order, preps: (ItemPrep | null)[]): Revie
       } else if (prep.toastedMs > TOAST_BURN_THRESHOLD_MS) {
         comments.push('burned_toast');
         stars--;
+      }
+    } else if (item.recipe !== 'coffee' && item.recipe !== 'toast' && prep.recipe === item.recipe) {
+      if (item.wantsExtra !== prep.extraAdded) {
+        comments.push(`missing_${EXTRA_NAME[item.recipe]}`);
+        stars--;
+      }
+      // Only pancakes can be under- or over-cooked; juice and salad have no timing.
+      if (item.recipe === 'pancakes') {
+        if (prep.processMs < TOAST_MIN_MS) {
+          comments.push('raw_pancakes');
+          stars--;
+        } else if (prep.processMs > TOAST_BURN_THRESHOLD_MS) {
+          comments.push('burned_pancakes');
+          stars--;
+        }
       }
     }
   });

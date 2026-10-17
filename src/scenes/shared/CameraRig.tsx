@@ -5,10 +5,10 @@ import { SceneId } from '../../game/types';
 import { cameraPose } from './world';
 
 /** Smoothly glides the camera (position and look-at) toward the target scene's pose. */
-export function CameraRig({ target }: { target: SceneId }) {
+export function CameraRig({ target, level }: { target: SceneId; level: number }) {
   const look = useRef<THREE.Vector3 | null>(null);
   useFrame((state, delta) => {
-    const pose = cameraPose(target);
+    const pose = cameraPose(target, level);
     const goal = new THREE.Vector3(...pose.position);
     const goalLook = new THREE.Vector3(...pose.lookAt);
     if (!look.current) {
