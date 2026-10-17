@@ -2,15 +2,14 @@ import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { useSceneCamera } from '../shared/sceneCamera';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
+import { ModelParts } from '../shared/props/ModelParts';
+import { BREAD, TOASTER } from '../shared/props/models.generated';
 import { BUTTER_ZONE, GRIDDLE_ZONE } from './zones';
 
 // Direction A "Madeira & Âmbar" palette.
 const MADEIRA = '#6B4226';
-const NOGUEIRA = '#4A2F1F';
 const AMBAR = '#F3B45A';
 const DISABLED = '#5a5a5a';
-const BREAD = '#D9A55C';
-const TOASTED = '#8A5428';
 
 const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
 const zones = [GRIDDLE_ZONE, BUTTER_ZONE];
@@ -74,10 +73,9 @@ export function ToastStation() {
         <meshStandardMaterial color={MADEIRA} {...materialProps} />
       </mesh>
 
-      {/* Griddle: flat slab behind the snap zone; tap to start toasting. */}
-      <mesh position={[GRIDDLE_ZONE.x, 0.06, 0]} onPointerDown={handleToast}>
-        <boxGeometry args={[0.8, 0.12, 0.6]} />
-        <meshStandardMaterial color={toasting ? AMBAR : NOGUEIRA} {...materialProps} />
+      {/* Toaster model (Kenney, CC0) behind the snap zone; tap to start toasting. */}
+      <mesh position={[GRIDDLE_ZONE.x, 0, 0]} onPointerDown={handleToast}>
+        <ModelParts data={TOASTER} scale={0.7} />
       </mesh>
 
       {/* Butter block, offset beside BUTTER_ZONE's center so the snapped bread doesn't swallow it. */}
@@ -87,8 +85,7 @@ export function ToastStation() {
       </mesh>
 
       <CupDraggable onDroppedOn={handleDroppedOn} zones={zones} y={0.04}>
-        <boxGeometry args={[0.22, 0.08, 0.22]} />
-        <meshStandardMaterial color={toasting ? TOASTED : BREAD} {...materialProps} />
+        <ModelParts data={BREAD} scale={0.3} offsetY={-0.04} tint={toasting ? '#8a5a3a' : '#ffffff'} />
       </CupDraggable>
 
       {/* Done trigger: amber once toasting has started. */}

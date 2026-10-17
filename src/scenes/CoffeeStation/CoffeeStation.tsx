@@ -2,11 +2,12 @@ import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { useSceneCamera } from '../shared/sceneCamera';
 import { CupDraggable } from './CupDraggable';
+import { ModelParts } from '../shared/props/ModelParts';
+import { COFFEE_MACHINE, CUP_COFFEE, CUP_EMPTY } from '../shared/props/models.generated';
 import { MACHINE_ZONE, SUGAR_ZONE } from './dropZones';
 
 // Direction A "Madeira & Âmbar" palette.
 const MADEIRA = '#6B4226';
-const NOGUEIRA = '#4A2F1F';
 const AMBAR = '#F3B45A';
 const CREME = '#F6E3C7';
 const DISABLED = '#5a5a5a';
@@ -76,32 +77,12 @@ export function CoffeeStation() {
         <meshStandardMaterial color={MADEIRA} {...materialProps} />
       </mesh>
 
-      {/* Coffee machine, geometry/material approach reused from the approved
-          preview (preview-3d-lowpoly-v2.html): box body + top + spout + two
-          knobs. Tap the body to pour, once the cup is on MACHINE_ZONE. The
-          body's own world position is fixed here (z=0), independent of
-          MACHINE_ZONE's z — that zone is the cup's snap target in front of
-          the spout, not the body's location (see dropZones.ts). */}
-      <group position={[MACHINE_ZONE.x, 0, 0]}>
-        <mesh position={[0, 0.31, 0]} onPointerDown={handlePour}>
-          <boxGeometry args={[0.62, 0.62, 0.42]} />
-          <meshStandardMaterial color={poured ? AMBAR : '#a8532f'} {...materialProps} />
-        </mesh>
-        <mesh position={[0, 0.69, 0]} onPointerDown={handlePour}>
-          <boxGeometry args={[0.5, 0.14, 0.36]} />
-          <meshStandardMaterial color={NOGUEIRA} {...materialProps} />
-        </mesh>
-        <mesh position={[0, 0.27, 0.25]}>
-          <boxGeometry args={[0.08, 0.22, 0.08]} />
-          <meshStandardMaterial color="#3a2a20" {...materialProps} />
-        </mesh>
-        {[-0.16, 0.16].map((kx) => (
-          <mesh key={kx} position={[kx, 0.45, 0.22]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.035, 0.035, 0.05, 10]} />
-            <meshStandardMaterial color="#6fa088" {...materialProps} />
-          </mesh>
-        ))}
-      </group>
+      {/* Coffee machine model (Kenney, CC0); tap it to pour once the cup is on
+          MACHINE_ZONE. Its position is independent of the zone's z — the zone
+          is the cup's snap target in front of the spout (see dropZones.ts). */}
+      <mesh position={[MACHINE_ZONE.x, 0, 0]} onPointerDown={handlePour}>
+        <ModelParts data={COFFEE_MACHINE} scale={0.75} />
+      </mesh>
 
       {/* Sugar packet, offset beside SUGAR_ZONE's center so the snapped cup
           (which sits exactly at that center) doesn't visually swallow it. */}
@@ -110,7 +91,9 @@ export function CoffeeStation() {
         <meshStandardMaterial color={CREME} {...materialProps} />
       </mesh>
 
-      <CupDraggable onDroppedOn={handleDroppedOn} />
+      <CupDraggable onDroppedOn={handleDroppedOn}>
+        <ModelParts data={poured ? CUP_COFFEE : CUP_EMPTY} scale={0.22} offsetY={-0.06} />
+      </CupDraggable>
 
       {/* Done trigger: always leaves the station (see handleDone); amber vs.
           gray is just a visual cue for whether a drink was poured. */}
