@@ -1,5 +1,7 @@
 import React from 'react';
 import { t } from '../i18n';
+import { HintBanner } from './HintBanner';
+import { useSettingsStore } from '../game/settings';
 import { neighborScene } from '../game/navigation';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
@@ -57,6 +59,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       ? `${queue.length} pending`
       : 'Waiting for customers';
 
+  const hintsOn = useSettingsStore((state) => state.hints);
   const slide = (dir: -1 | 1) => {
     const target = neighborScene(scene, dir);
     if (target && !isTransitioning) {
@@ -89,11 +92,7 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       {scene === 'orderBoard' && !currentOrder && !dayOver && (
         <OrderQueueOverlay orders={queue} onPick={handlePick} fontLoaded={fontsLoaded} />
       )}
-      {!dayOver && (
-        <View style={styles.hint} pointerEvents="none">
-          <Text style={styles.hintText}>{t(HINTS[scene])}</Text>
-        </View>
-      )}
+      {hintsOn && !dayOver && <HintBanner text={t(HINTS[scene])} />}
       <View style={styles.clock} pointerEvents="none">
         <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
       </View>
@@ -135,18 +134,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  hint: {
-    position: 'absolute',
-    top: 64,
-    left: 24,
-    right: 24,
-    alignItems: 'center',
-    backgroundColor: `${NOGUEIRA}CC`,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-  hintText: { color: CREME, fontSize: 15, textAlign: 'center' },
   arrow: {
     position: 'absolute',
     top: '45%',

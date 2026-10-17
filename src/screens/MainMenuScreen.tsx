@@ -5,7 +5,7 @@ import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { useGameStore } from '../state/gameStore';
 import { saveProgress } from '../game/persistence';
 
-export function MainMenuScreen({ onStart, ready }: { onStart: () => void; ready: boolean }) {
+export function MainMenuScreen({ onStart, ready, onOptions }: { onStart: () => void; ready: boolean; onOptions?: () => void }) {
   // Font loading never gates the buttons; fall back to the system font.
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
   const font = fontsLoaded ? { fontFamily: 'Figtree_600SemiBold' } : undefined;
@@ -35,6 +35,11 @@ export function MainMenuScreen({ onStart, ready }: { onStart: () => void; ready:
       <Pressable style={[styles.secondary, !ready && styles.disabled]} onPress={handleSave}>
         <Text style={[styles.secondaryText, font]}>{t('menuSave')}</Text>
       </Pressable>
+      {onOptions && (
+        <Pressable style={styles.secondary} onPress={onOptions}>
+          <Text style={[styles.secondaryText, font]}>{t('menuOptions')}</Text>
+        </Pressable>
+      )}
       {Platform.OS === 'android' && (
         <Pressable style={styles.secondary} onPress={() => BackHandler.exitApp()}>
           <Text style={[styles.secondaryText, font]}>{t('menuExit')}</Text>

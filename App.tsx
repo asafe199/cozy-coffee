@@ -6,13 +6,19 @@ import { InstructionsScreen } from './src/screens/InstructionsScreen';
 import { LevelSelectScreen } from './src/screens/LevelSelectScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { loadProgress } from './src/game/persistence';
+import { OptionsScreen } from './src/screens/OptionsScreen';
+import { useSettingsStore } from './src/game/settings';
 import { useGameStore } from './src/state/gameStore';
 
-type Screen = 'menu' | 'instructions' | 'levels' | 'game';
+type Screen = 'menu' | 'options' | 'instructions' | 'levels' | 'game';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    useSettingsStore.getState().hydrateSettings();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -31,7 +37,8 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {screen === 'menu' && <MainMenuScreen ready={ready} onStart={() => setScreen('instructions')} />}
+      {screen === 'menu' && <MainMenuScreen ready={ready} onStart={() => setScreen('instructions')} onOptions={() => setScreen('options')} />}
+      {screen === 'options' && <OptionsScreen onBack={() => setScreen('menu')} />}
       {screen === 'instructions' && (
         <InstructionsScreen onContinue={() => setScreen('levels')} onBack={() => setScreen('menu')} />
       )}
