@@ -1,6 +1,5 @@
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
-import { CafeBackdrop } from '../shared/CafeBackdrop';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
@@ -37,7 +36,6 @@ export function OrderBoard() {
 
   return (
     <group>
-      <CafeBackdrop variant="board" />
       {/* Chalkboard (tap to start the next order); text lives in the RN overlay. */}
       <mesh position={[0, 0, 0]} onPointerDown={handleTap}>
         <boxGeometry args={[1.6, 1.0, 0.06]} />
