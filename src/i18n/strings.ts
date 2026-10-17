@@ -20,6 +20,7 @@ const pt = {
   level4Name: 'Café charmoso',
   level5Name: 'Café sofisticado',
   placeholderTitle: 'Em breve',
+  gameMenu: 'Menu',
 };
 
 export type StringKey = keyof typeof pt;
@@ -47,6 +48,7 @@ const en: Record<StringKey, string> = {
   level4Name: 'Charming café',
   level5Name: 'Sophisticated café',
   placeholderTitle: 'Coming soon',
+  gameMenu: 'Menu',
 };
 
 const es: Record<StringKey, string> = {
@@ -71,6 +73,7 @@ const es: Record<StringKey, string> = {
   level4Name: 'Café con encanto',
   level5Name: 'Café sofisticado',
   placeholderTitle: 'Próximamente',
+  gameMenu: 'Menu',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { pt, en, es };

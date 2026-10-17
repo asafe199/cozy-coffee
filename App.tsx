@@ -38,7 +38,7 @@ export default function App() {
       {screen === 'levels' && (
         <LevelSelectScreen onSelectLevel={() => setScreen('game')} onBack={() => setScreen('instructions')} />
       )}
-      {screen === 'game' && <GameScreen />}
+      {screen === 'game' && <GameScreen onExit={() => setScreen('menu')} />}
       <StatusBar style="light" />
     </GestureHandlerRootView>
   );

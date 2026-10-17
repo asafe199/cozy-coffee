@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { GameScene } from '../scenes/GameScene';
@@ -19,7 +20,7 @@ const CREME = '#F6E3C7';
  * recent review's star count. Font loading only gates the HUD text, not the
  * Canvas — the game is playable even before Figtree finishes loading.
  */
-export function GameScreen() {
+export function GameScreen({ onExit }: { onExit?: () => void }) {
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
   useOrderArrivals();
   const reviews = useGameStore((state) => state.reviews);
@@ -78,6 +79,11 @@ export function GameScreen() {
           <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
         )}
       </View>
+      {onExit && (
+        <Pressable style={styles.menuButton} onPress={onExit}>
+          <Text style={styles.hudText}>{t('gameMenu')}</Text>
+        </Pressable>
+      )}
       {dayOver && (
         <View style={styles.summaryBackdrop}>
           <View style={styles.summaryCard}>
@@ -100,6 +106,15 @@ export function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  menuButton: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    backgroundColor: `${NOGUEIRA}CC`,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
   hud: {
     position: 'absolute',
