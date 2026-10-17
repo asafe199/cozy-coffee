@@ -28,7 +28,7 @@ export function MainMenuScreen({ onStart, ready }: { onStart: () => void; ready:
     <View style={styles.container}>
       <Text style={[styles.logo, font]}>Brewlight</Text>
       <Text style={[styles.subtitle, font]}>SUA CAFETERIA ACONCHEGANTE</Text>
-      <Pressable style={styles.primary} onPress={onStart}>
+      <Pressable style={[styles.primary, !ready && styles.disabled]} onPress={() => ready && onStart()}>
         <Text style={[styles.primaryText, font]}>Iniciar</Text>
       </Pressable>
       <Pressable style={[styles.secondary, !ready && styles.disabled]} onPress={handleSave}>

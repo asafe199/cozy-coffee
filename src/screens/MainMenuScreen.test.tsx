@@ -26,6 +26,13 @@ test('Iniciar calls onStart', async () => {
   expect(onStart).toHaveBeenCalledTimes(1);
 });
 
+test('Iniciar does nothing until ready', async () => {
+  const onStart = jest.fn();
+  await render(<MainMenuScreen onStart={onStart} ready={false} />);
+  await fireEvent.press(screen.getByText('Iniciar'));
+  expect(onStart).not.toHaveBeenCalled();
+});
+
 test('Salvar saves current day/money and shows Saved', async () => {
   useGameStore.setState({ day: 3, money: 42 } as never);
   await render(<MainMenuScreen onStart={jest.fn()} ready />);
