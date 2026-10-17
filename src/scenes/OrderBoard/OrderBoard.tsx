@@ -4,7 +4,7 @@ import { useGameStore } from '../../state/gameStore';
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
 const MADEIRA = '#6B4226';
-const CHALK_GREEN = '#2F4A3E';
+const CHALK_GREEN = '#3F6B57';
 const CREME = '#F6E3C7';
 const AMBAR = '#F3B45A';
 

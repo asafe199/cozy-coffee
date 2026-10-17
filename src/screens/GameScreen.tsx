@@ -66,7 +66,10 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       startTransition(target, dir);
     }
   };
-  const showArrows = !!currentOrder && !dayOver;
+  const showArrows = !dayOver;
+  // Moving right from the board only makes sense once an order has been picked.
+  const canGo = (dir: -1 | 1) =>
+    !!neighborScene(scene, dir) && !(scene === 'orderBoard' && dir === 1 && !currentOrder);
 
   const handlePick = (orderId: string) => {
     if (isTransitioning) {
@@ -96,12 +99,12 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       <View style={styles.clock} pointerEvents="none">
         <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
       </View>
-      {showArrows && neighborScene(scene, -1) && (
+      {showArrows && canGo(-1) && (
         <Pressable style={[styles.arrow, styles.arrowLeft]} onPress={() => slide(-1)} hitSlop={12}>
           <Text style={styles.arrowText}>◀</Text>
         </Pressable>
       )}
-      {showArrows && neighborScene(scene, 1) && (
+      {showArrows && canGo(1) && (
         <Pressable style={[styles.arrow, styles.arrowRight]} onPress={() => slide(1)} hitSlop={12}>
           <Text style={styles.arrowText}>▶</Text>
         </Pressable>
