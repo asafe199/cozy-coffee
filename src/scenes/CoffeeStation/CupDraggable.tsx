@@ -134,7 +134,9 @@ export function CupDraggable({
     if (!isDragging.current) {
       return;
     }
-    posX.value = event.point.x;
+    // Stations sit at different world x; positions are local to the station group.
+    const originX = meshRef.current?.parent?.position.x ?? 0;
+    posX.value = event.point.x - originX;
     posZ.value = event.point.z;
   };
 

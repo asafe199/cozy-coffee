@@ -1,7 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { CafeBackdrop } from '../shared/CafeBackdrop';
-import { useSceneCamera } from '../shared/sceneCamera';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
@@ -16,8 +15,6 @@ const AMBAR = '#F3B45A';
  * order and cuts to the coffee station.
  */
 export function OrderBoard() {
-  useSceneCamera([0, 0, 2.2], [0, 0, 0]);
-
   const beginOrder = useGameStore((state) => state.beginOrder);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);

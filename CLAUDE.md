@@ -218,3 +218,5 @@ docs/superpowers/plans/   — implementation plans
 ## 3D props
 
 Props (machine, toaster, cup, bread) are Kenney CC0 models baked to TS geometry (`src/scenes/shared/props/`, see `docs/ASSETS.md`). Render with `<ModelParts>`; do not add glTF loaders (RN texture loading is fragile). Visuals are unverified on-device; tune `scale` in the station files.
+
+Scenes live side by side in one world (`src/scenes/shared/world.ts`); `CameraRig` glides the camera to `pendingScene ?? scene`. Stations stay mounted and are keyed by order/item to reset. Do not reintroduce per-scene camera setup.

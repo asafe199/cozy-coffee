@@ -1,7 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { CafeBackdrop } from '../shared/CafeBackdrop';
-import { useSceneCamera } from '../shared/sceneCamera';
 
 // Direction A "Madeira & Âmbar" palette.
 const MADEIRA = '#6B4226';
@@ -15,8 +14,6 @@ const AMBAR = '#F3B45A';
  * from the arrival queue.
  */
 export function DeliveryCounter() {
-  useSceneCamera([0, 0.8, 1.8], [0, 0.3, 0]);
-
   const deliverOrder = useGameStore((state) => state.deliverOrder);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
+import { stationForItem } from '../../game/orders';
 import { CafeBackdrop } from '../shared/CafeBackdrop';
-import { useSceneCamera } from '../shared/sceneCamera';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
 import { ModelParts } from '../shared/props/ModelParts';
 import { BREAD, TOASTER } from '../shared/props/models.generated';
@@ -23,11 +23,15 @@ const zones = [GRIDDLE_ZONE, BUTTER_ZONE];
  * review. Local state resets on every visit (the scene remounts per visit).
  */
 export function ToastStation() {
-  useSceneCamera([0, 1.6, 1.8], [0, 0, 0]);
-
   const completeItem = useGameStore((state) => state.completeItem);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
+  // Done only counts at the station the current item belongs to (the player can pan anywhere).
+  const isActive = useGameStore(
+    (state) =>
+      !!state.currentOrder &&
+      stationForItem(state.currentOrder.items[state.itemIndex] ?? state.currentOrder.items[0]) === 'toastStation'
+  );
 
   const toastStartRef = useRef<number | null>(null);
   const [breadZone, setBreadZone] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export function ToastStation() {
   // Always leaves: an untouched station records a null prep, which the review
   // treats as a valid worst-case input (never a dead end).
   const handleDone = () => {
-    if (isTransitioning) {
+    if (isTransitioning || !isActive) {
       return;
     }
     const start = toastStartRef.current;

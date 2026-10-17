@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
+import { stationForItem } from '../../game/orders';
 import { CafeBackdrop } from '../shared/CafeBackdrop';
-import { useSceneCamera } from '../shared/sceneCamera';
 import { CupDraggable } from './CupDraggable';
 import { ModelParts } from '../shared/props/ModelParts';
 import { COFFEE_MACHINE, CUP_COFFEE, CUP_EMPTY } from '../shared/props/models.generated';
@@ -28,11 +28,15 @@ const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as 
  * reset behavior we want between visits.
  */
 export function CoffeeStation() {
-  useSceneCamera([0, 1.6, 1.8], [0, 0, 0]);
-
   const completeItem = useGameStore((state) => state.completeItem);
   const startTransition = useGameStore((state) => state.startTransition);
   const isTransitioning = useGameStore((state) => state.isTransitioning);
+  // Done only counts at the station the current item belongs to (the player can pan anywhere).
+  const isActive = useGameStore(
+    (state) =>
+      !!state.currentOrder &&
+      stationForItem(state.currentOrder.items[state.itemIndex] ?? state.currentOrder.items[0]) === 'coffeeStation'
+  );
 
   const entryTimeRef = useRef<number>(Date.now());
   const [cupZone, setCupZone] = useState<string | null>(null);
@@ -59,7 +63,7 @@ export function CoffeeStation() {
   // isn't trapped (no back button exists), and an unpoured prep is a valid,
   // non-crashing input — calculateReview's null-prep branch handles it.
   const handleDone = () => {
-    if (isTransitioning) {
+    if (isTransitioning || !isActive) {
       return;
     }
     const next = completeItem(

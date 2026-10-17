@@ -235,11 +235,11 @@ export function CafeBackdrop({ variant }: { variant: 'counter' | 'board' }) {
     return (
       <group>
         <mesh position={[0, 0, -0.2]}>
-          <boxGeometry args={[9, 5, 0.05]} />
+          <boxGeometry args={[6, 5, 0.05]} />
           <meshStandardMaterial color={PLASTER} {...mat} />
         </mesh>
         <mesh position={[0, -1.2, -0.17]}>
-          <boxGeometry args={[9, 1.4, 0.05]} />
+          <boxGeometry args={[6, 1.4, 0.05]} />
           <meshStandardMaterial color={WAINSCOT} {...mat} />
         </mesh>
         <Window position={[-1.6, 0.2, -0.15]} />
@@ -260,11 +260,11 @@ export function CafeBackdrop({ variant }: { variant: 'counter' | 'board' }) {
   return (
     <group>
       <mesh position={[0, 1, -1.25]}>
-        <boxGeometry args={[9, 4, 0.05]} />
+        <boxGeometry args={[6, 4, 0.05]} />
         <meshStandardMaterial color={PLASTER} {...mat} />
       </mesh>
       <mesh position={[0, 0.2, -1.2]}>
-        <boxGeometry args={[9, 0.5, 0.05]} />
+        <boxGeometry args={[6, 0.5, 0.05]} />
         <meshStandardMaterial color={WAINSCOT} {...mat} />
       </mesh>
       <Shelf position={[-0.2, 0.85, -1.25]} cups={5} />
