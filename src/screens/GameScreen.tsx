@@ -5,6 +5,9 @@ import { GameScene } from '../scenes/GameScene';
 import { FadeTransition } from '../scenes/FadeTransition/FadeTransition';
 import { useGameStore } from '../state/gameStore';
 import { formatClock } from '../game/shift';
+import { describeOrder } from '../game/orders';
+import { useOrderArrivals } from '../state/useOrderArrivals';
+import { OrderQueueOverlay } from './OrderQueueOverlay';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
@@ -18,10 +21,15 @@ const CREME = '#F6E3C7';
  */
 export function GameScreen() {
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
+  useOrderArrivals();
   const reviews = useGameStore((state) => state.reviews);
   const lastStars = reviews[reviews.length - 1]?.stars;
   const scene = useGameStore((state) => state.scene);
   const currentOrder = useGameStore((state) => state.currentOrder);
+  const queue = useGameStore((state) => state.queue);
+  const beginOrder = useGameStore((state) => state.beginOrder);
+  const startTransition = useGameStore((state) => state.startTransition);
+  const isTransitioning = useGameStore((state) => state.isTransitioning);
   const clock = useGameStore((state) => state.clock);
   const day = useGameStore((state) => state.day);
   const dayOver = useGameStore((state) => state.dayOver);
@@ -34,14 +42,17 @@ export function GameScreen() {
     : '–';
 
   const orderLabel = currentOrder
-    ? currentOrder.items
-        .map((item) =>
-          item.recipe === 'coffee'
-            ? `Coffee${item.wantsSugar ? ' with sugar' : ''}`
-            : `Toast${item.wantsButter ? ' with butter' : ''}`
-        )
-        .join(' + ')
-    : 'Tap for next order';
+    ? describeOrder(currentOrder)
+    : queue.length > 0
+      ? `${queue.length} pending`
+      : 'Waiting for customers';
+
+  const handlePick = (orderId: string) => {
+    if (isTransitioning) {
+      return;
+    }
+    startTransition(beginOrder(orderId));
+  };
 
   return (
     <View style={styles.container}>
@@ -58,6 +69,9 @@ export function GameScreen() {
         <View style={styles.orderLabel} pointerEvents="none">
           {fontsLoaded && <Text style={styles.orderLabelText}>{orderLabel}</Text>}
         </View>
+      )}
+      {scene === 'orderBoard' && !currentOrder && !dayOver && (
+        <OrderQueueOverlay orders={queue} onPick={handlePick} fontLoaded={fontsLoaded} />
       )}
       <View style={styles.clock} pointerEvents="none">
         {fontsLoaded && (

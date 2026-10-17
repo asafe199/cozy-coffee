@@ -15,3 +15,13 @@ export function generateOrder(rng: () => number = Math.random): Order {
     items,
   };
 }
+
+export function describeOrder(order: Order): string {
+  return order.items
+    .map((item) =>
+      item.recipe === 'coffee'
+        ? `Coffee${item.wantsSugar ? ' with sugar' : ''}`
+        : `Toast${item.wantsButter ? ' with butter' : ''}`,
+    )
+    .join(' + ');
+}

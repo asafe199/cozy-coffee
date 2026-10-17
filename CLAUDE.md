@@ -159,6 +159,11 @@ launch** (this supersedes persistence Task 3's `GameScreen` location).
 Flow is now menu → instructions → level select → game
 (`App.tsx`, `useState` switch); only level 1 is selectable, 2-5 show
 "Bloqueado" (no IAP yet). `PlaceholderScreen` is unused but kept. Pending: no way back from game to menu.
+**Order queue — done:** orders arrive over the shift (`src/game/queue.ts`,
+`useOrderArrivals`): up to 3 pending, faster at peak, never expiring.
+The board's pending orders are RN `Pressable` cards in `OrderQueueOverlay`
+(not 3D meshes); tapping one calls `beginOrder(id)`. Tapping the 3D board
+takes the oldest. `DeliveryCounter` no longer pre-generates the next order.
 `jest.setup.js` no longer loads the reanimated mock (it broke under
 reanimated 4 + worklets); RNTL v14 `render`/`fireEvent` must be awaited.
 

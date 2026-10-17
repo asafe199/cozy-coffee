@@ -1,4 +1,4 @@
-import { generateOrder } from './orders';
+import { describeOrder, generateOrder } from './orders';
 
 test('generateOrder returns 1-2 items and a unique id', () => {
   const a = generateOrder();
@@ -19,4 +19,16 @@ test('a high rng yields a two-item order ending with toast', () => {
     { recipe: 'coffee', wantsSugar: false },
     { recipe: 'toast', wantsButter: false },
   ]);
+});
+
+test('describeOrder lists items with their options', () => {
+  expect(
+    describeOrder({
+      id: 'x',
+      items: [
+        { recipe: 'coffee', wantsSugar: true },
+        { recipe: 'toast', wantsButter: false },
+      ],
+    }),
+  ).toBe('Coffee with sugar + Toast');
 });

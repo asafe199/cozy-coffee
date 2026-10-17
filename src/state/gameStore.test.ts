@@ -10,6 +10,7 @@ const initialStateValues = {
   isTransitioning: false,
   pendingScene: null,
   currentOrder: null,
+  queue: [] as Order[],
   reviews: [],
   itemIndex: 0,
   preps: [],
@@ -129,6 +130,41 @@ test('requestNextOrder resets item progress', () => {
   expect(s.preps).toEqual([]);
 });
 
+test('enqueueOrder adds orders up to the pending cap', () => {
+  for (let i = 0; i < 5; i++) useGameStore.getState().enqueueOrder();
+  expect(useGameStore.getState().queue).toHaveLength(3);
+});
+
+test('enqueueOrder does nothing while the day is over', () => {
+  useGameStore.setState({ dayOver: true });
+  useGameStore.getState().enqueueOrder();
+  expect(useGameStore.getState().queue).toHaveLength(0);
+});
+
+test('beginOrder(id) takes the chosen order out of the queue', () => {
+  const other: Order = { id: 'other', items: [{ recipe: 'toast', wantsButter: false }] };
+  useGameStore.setState({ queue: [coffeeOnly, other] });
+  const next = useGameStore.getState().beginOrder('other');
+  const s = useGameStore.getState();
+  expect(s.currentOrder).toBe(other);
+  expect(s.queue).toEqual([coffeeOnly]);
+  expect(next).toBe('toastStation');
+});
+
+test('beginOrder without id takes the oldest queued order', () => {
+  useGameStore.setState({ queue: [coffeeOnly, comboOrder] });
+  useGameStore.getState().beginOrder();
+  expect(useGameStore.getState().currentOrder).toBe(coffeeOnly);
+  expect(useGameStore.getState().queue).toEqual([comboOrder]);
+});
+
+test('beginOrder with an in-flight order ignores the queue', () => {
+  useGameStore.setState({ currentOrder: comboOrder, queue: [coffeeOnly] });
+  useGameStore.getState().beginOrder('solo');
+  expect(useGameStore.getState().currentOrder).toBe(comboOrder);
+  expect(useGameStore.getState().queue).toEqual([coffeeOnly]);
+});
+
 function serveOrders(count: number) {
   for (let i = 0; i < count; i++) {
     useGameStore.setState({ currentOrder: coffeeOnly, itemIndex: 0, preps: [] });
@@ -203,4 +239,10 @@ test('startNextDay persists the updated day', async () => {
     day: useGameStore.getState().day,
     money: useGameStore.getState().money,
   });
+});
+
+test('startNextDay clears the waiting queue', () => {
+  useGameStore.setState({ dayOver: true, queue: [coffeeOnly] });
+  useGameStore.getState().startNextDay();
+  expect(useGameStore.getState().queue).toEqual([]);
 });

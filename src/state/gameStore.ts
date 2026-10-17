@@ -4,6 +4,7 @@ import { generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
 import { Clock, advanceClock, initialClock } from '../game/shift';
 import { orderValue } from '../game/menu';
+import { canEnqueue, takeFromQueue } from '../game/queue';
 import { saveProgress, PersistedProgress } from '../game/persistence';
 
 interface GameState {
@@ -11,6 +12,8 @@ interface GameState {
   isTransitioning: boolean;
   pendingScene: SceneId | null;
   currentOrder: Order | null;
+  /** Orders waiting on the board; the player may pick any of them. */
+  queue: Order[];
   reviews: ReviewResult[];
   itemIndex: number;
   preps: (ItemPrep | null)[];
@@ -25,7 +28,10 @@ interface GameState {
 interface GameActions {
   requestNextOrder: () => void;
   /** Ensures an order exists (never overwrites one in flight) and returns the first station to visit. */
-  beginOrder: () => SceneId;
+  /** Accepts the chosen queued order (or the oldest) unless one is already in flight; returns the first station to visit. */
+  beginOrder: (orderId?: string) => SceneId;
+  /** A customer arrives: adds an order if the board has room and the shift budget allows. */
+  enqueueOrder: () => void;
   startTransition: (target: SceneId) => void;
   completeTransition: () => void;
   /** Records the current item's prep and returns the next scene to visit. */
@@ -43,6 +49,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isTransitioning: false,
   pendingScene: null,
   currentOrder: null,
+  queue: [],
   reviews: [],
   itemIndex: 0,
   preps: [],
@@ -62,9 +69,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } as Partial<GameStore>);
   },
 
-  beginOrder: () => {
+  enqueueOrder: () => {
+    const state = get();
+    if (state.dayOver || !canEnqueue(state.queue.length, state.currentOrder !== null, state.clock.ordersServed)) {
+      return;
+    }
+    set({ queue: [...state.queue, generateOrder()] } as Partial<GameStore>);
+  },
+
+  beginOrder: (orderId?: string) => {
     if (!get().currentOrder) {
-      get().requestNextOrder();
+      const taken = takeFromQueue(get().queue, orderId);
+      if (taken) {
+        set({
+          currentOrder: taken.order,
+          queue: taken.rest,
+          itemIndex: 0,
+          preps: [],
+        } as Partial<GameStore>);
+      } else {
+        // Never leave the player stuck on an empty board.
+        get().requestNextOrder();
+      }
     }
     const order = get().currentOrder as Order;
     return stationForItem(order.items[get().itemIndex] ?? order.items[0]);
@@ -138,6 +164,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       dayOver: false,
       dayEarnings: 0,
       dayReviews: [],
+      queue: [],
     } as Partial<GameStore>);
     saveProgress({ day: get().day, money: get().money });
   },
