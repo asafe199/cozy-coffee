@@ -214,3 +214,7 @@ src/
 docs/superpowers/specs/   — design docs (read these for "why")
 docs/superpowers/plans/   — implementation plans
 ```
+
+## 3D props
+
+Props (machine, toaster, cup, bread) are Kenney CC0 models baked to TS geometry (`src/scenes/shared/props/`, see `docs/ASSETS.md`). Render with `<ModelParts>`; do not add glTF loaders (RN texture loading is fragile). Visuals are unverified on-device; tune `scale` in the station files.
