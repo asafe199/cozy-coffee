@@ -13,6 +13,7 @@ import { OrderQueueOverlay } from './OrderQueueOverlay';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
+const AMBAR = '#F3B45A';
 const CREME = '#F6E3C7';
 
 /**
