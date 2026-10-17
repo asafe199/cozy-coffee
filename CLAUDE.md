@@ -151,6 +151,16 @@ the exact resume point. Do not re-do Tasks 1-2; do not merge this worktree
 until Task 3 and a final whole-branch review are done
 (`superpowers:subagent-driven-development` process).
 
+**Main menu (slice 1) — done, uncommitted review pending:** spec
+`docs/superpowers/specs/2026-10-16-brewlight-main-menu-design.md`, plan
+`docs/superpowers/plans/2026-10-16-brewlight-main-menu.md`. `App.tsx` now
+switches menu/placeholder via `useState` and **hydrates saved progress at
+launch** (this supersedes persistence Task 3's `GameScreen` location).
+Iniciar currently goes to a "Coming soon" placeholder, NOT the game;
+`GameScreen` is not rendered until instructions/level-select exist.
+`jest.setup.js` no longer loads the reanimated mock (it broke under
+reanimated 4 + worklets); RNTL v14 `render`/`fireEvent` must be awaited.
+
 **New design requirements dictated 2026-10-16, in this worktree's design
 doc but NOT YET MERGED to main** (`docs/superpowers/specs/2026-10-16-cozy-cafe-design.md`,
 sections "Fluxo de telas" and "Cardápio expandido"): a main menu (game
