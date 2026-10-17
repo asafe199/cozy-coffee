@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
+import { Steam } from '../shared/props/Steam';
 import { ModelParts } from '../shared/props/ModelParts';
 import { BREAD, TOASTER } from '../shared/props/models.generated';
 import { BUTTER_ZONE, GRIDDLE_ZONE } from './zones';
@@ -83,6 +84,7 @@ export function ToastStation() {
       <mesh position={[GRIDDLE_ZONE.x, 0, 0]} onPointerDown={handleToast}>
         <ModelParts data={TOASTER} scale={0.7} />
       </mesh>
+      <Steam active={toasting} position={[GRIDDLE_ZONE.x, 0.5, GRIDDLE_ZONE.z]} />
 
       {/* Butter block, offset beside BUTTER_ZONE's center so the snapped bread doesn't swallow it. */}
       <mesh position={[BUTTER_ZONE.x, 0.04, BUTTER_ZONE.z + 0.25]}>

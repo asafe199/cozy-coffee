@@ -78,6 +78,11 @@ export function CupDraggable({
   // release is always done through this stored reference instead of the release event's own.
   const capturedTarget = useRef<CaptureTarget | null>(null);
   const trackedPointerId = useRef<number | null>(null);
+  // Offset between the finger's first touch point and the cup's position at
+  // that moment, so the cup keeps the same point under the finger for the
+  // whole drag instead of snapping its center to wherever it was grabbed.
+  const grabOffsetX = useRef(0);
+  const grabOffsetZ = useRef(0);
 
   // Keeps the callback passed to the canvas-level listener (registered once, see useEffect
   // below) from closing over a stale onDroppedOn/finalize if this component re-renders.
@@ -143,8 +148,8 @@ export function CupDraggable({
     }
     // Stations sit at different world x; positions are local to the station group.
     const originX = meshRef.current?.parent?.position.x ?? 0;
-    posX.value = event.point.x - originX;
-    posZ.value = event.point.z;
+    posX.value = event.point.x - originX - grabOffsetX.current;
+    posZ.value = event.point.z - grabOffsetZ.current;
   };
 
   const handleUp = () => {
@@ -200,6 +205,12 @@ export function CupDraggable({
         position={[CUP_ORIGIN.x, y, CUP_ORIGIN.z]}
         onPointerDown={(event: ThreeEvent<PointerEvent>) => {
           isDragging.current = true;
+          // Record where on the cup the finger actually landed, relative to
+          // the cup's current position, so the first onPointerMove doesn't
+          // snap the cup's center to the touch point (see handleMove).
+          const originX = meshRef.current?.parent?.position.x ?? 0;
+          grabOffsetX.current = event.point.x - originX - posX.value;
+          grabOffsetZ.current = event.point.z - posZ.value;
           // Lift off the counter (and out of any slot) while carried.
           posY.value = withSpring(y + 0.1);
           rotX.value = withSpring(0);
