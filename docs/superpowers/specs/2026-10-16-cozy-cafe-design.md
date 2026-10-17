@@ -178,6 +178,31 @@ por nível, de 1 a 5:
 - **Paywall:** o nível 1 é jogável inteiramente de graça. Progredir para os
   níveis 2-5 exige o IAP único de "versão completa" (ver Modelo de negócio).
 
+### Fluxo de telas (menu → seleção de nível → jogo)
+
+Detalhado pelo autor em 2026-10-16, ainda não implementado — captura pra
+quando o plano do menu principal for escrito:
+
+1. **Menu principal**: nome do jogo, paleta de cores do jogo (Madeira &
+   Âmbar), botões **Iniciar**, **Salvar**, **Sair**.
+2. **Tela de instruções**: explica como jogar antes de entrar na seleção
+   de nível.
+3. **Seleção de nível (1 a 5)**: uma miniatura por nível — nível 1 uma
+   cafeteria simples, nível 5 uma cafeteria sofisticada (progressão visual
+   entre as miniaturas). Nível 1 sempre desbloqueado; níveis 2-5 aparecem
+   bloqueados até a compra (consistente com o paywall já definido acima).
+4. **Entrar na cafeteria**: ao clicar num nível desbloqueado, entra na
+   cena 3D (o loop de jogo já construído) — pedidos aparecem no canto da
+   tela, o jogador vai até a bancada de pedidos, aceita/lê o pedido, e
+   prepara na estação correspondente.
+
+### Cardápio expandido (receitas futuras)
+
+Além de café e torrada (já implementados), o autor mencionou querer mais
+tipos de item ao longo do jogo: suco, salada, e "outras coisas que uma
+cafeteria tem" — lista exata ainda em aberto, cada um seguindo o mesmo
+padrão de estação+preparo já estabelecido pelas receitas existentes.
+
 ### Estrutura do dia / turnos
 
 - A cafeteria opera em turnos: manhã e tarde. Fecha à noite.
