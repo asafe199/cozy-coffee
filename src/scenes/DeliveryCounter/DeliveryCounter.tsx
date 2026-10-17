@@ -2,7 +2,9 @@ import { Steam } from '../shared/props/Steam';
 import { SPECS } from '../RecipeStation/specs';
 import { RecipeItemView } from '../RecipeStation/RecipeItemView';
 import { levelConfig } from '../../game/levels';
-import React from 'react';
+import React, { useRef } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '../../state/gameStore';
 import { ItemPrep, Recipe } from '../../game/types';
 import { TOAST_BURN_THRESHOLD_MS, TOAST_MIN_MS } from '../../game/review';
@@ -89,64 +91,86 @@ function ServedItem({ recipe, prep, x }: { recipe: Recipe; prep: ItemPrep | null
   );
 }
 
-function CashRegister({ position }: { position: [number, number, number] }) {
+/** Glass-front pastry display case with a few baked goods inside. */
+function PastryCase({ position }: { position: [number, number, number] }) {
+  const pastryColors = ['#8a5a33', '#d9a768', '#c85c4f'];
   return (
     <group position={position}>
-      <mesh position={[0, 0.09, 0]}>
-        <boxGeometry args={[0.44, 0.18, 0.34]} />
-        <meshStandardMaterial color="#3a3a3a" {...mat} />
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[0.5, 0.2, 0.26]} />
+        <meshStandardMaterial color={NOGUEIRA} {...mat} />
       </mesh>
-      {/* Customer display, tilted */}
-      <mesh position={[0, 0.27, -0.08]} rotation={[-0.35, 0, 0]}>
-        <boxGeometry args={[0.3, 0.16, 0.03]} />
-        <meshStandardMaterial color="#2a2a2a" {...mat} />
+      <mesh position={[0, 0.24, 0]}>
+        <boxGeometry args={[0.46, 0.08, 0.22]} />
+        <meshStandardMaterial color="#eaf4f6" transparent opacity={0.3} roughness={0.1} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 0.27, -0.065]} rotation={[-0.35, 0, 0]}>
-        <boxGeometry args={[0.25, 0.11, 0.01]} />
-        <meshBasicMaterial color="#8fd3c8" />
-      </mesh>
-      {/* Open cash drawer with bills */}
-      <mesh position={[0, 0.03, 0.22]}>
-        <boxGeometry args={[0.4, 0.05, 0.14]} />
-        <meshStandardMaterial color="#555555" {...mat} />
-      </mesh>
-      {[-0.1, 0, 0.1].map((dx, i) => (
-        <mesh key={i} position={[dx, 0.062, 0.22]}>
-          <boxGeometry args={[0.08, 0.012, 0.11]} />
-          <meshStandardMaterial color={['#5E8A5A', '#7DAA73', '#5E8A5A'][i]} {...mat} />
+      {pastryColors.map((c, i) => (
+        <mesh key={i} position={[(i - 1) * 0.14, 0.16, 0]}>
+          <cylinderGeometry args={[0.05, 0.055, 0.035, 12]} />
+          <meshStandardMaterial color={c} {...mat} />
         </mesh>
       ))}
     </group>
   );
 }
 
-function Computer({ position }: { position: [number, number, number] }) {
+/** A serving cloche: glass dome over a stand, with a little steam rising. */
+function Cloche({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.02, 0]}>
-        <cylinderGeometry args={[0.09, 0.1, 0.04, 12]} />
-        <meshStandardMaterial color="#2a2a2a" {...mat} />
+      <mesh position={[0, 0.005, 0]}>
+        <cylinderGeometry args={[0.11, 0.11, 0.01, 20]} />
+        <meshStandardMaterial color="#9a6b43" {...mat} />
       </mesh>
-      <mesh position={[0, 0.12, 0]}>
-        <boxGeometry args={[0.04, 0.16, 0.04]} />
-        <meshStandardMaterial color="#2a2a2a" {...mat} />
+      <mesh position={[0, 0.07, 0]}>
+        <sphereGeometry args={[0.1, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#eaf4f6" transparent opacity={0.3} roughness={0.1} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 0.3, 0]}>
-        <boxGeometry args={[0.5, 0.32, 0.04]} />
-        <meshStandardMaterial color="#2a2a2a" {...mat} />
+      <mesh position={[0, 0.105, 0]}>
+        <sphereGeometry args={[0.012, 8, 8]} />
+        <meshStandardMaterial color="#F3B45A" {...mat} />
       </mesh>
-      <mesh position={[0, 0.3, 0.025]}>
-        <boxGeometry args={[0.45, 0.27, 0.01]} />
-        <meshBasicMaterial color="#9ad6e8" />
+      <Steam active position={[0, 0.17, 0]} />
+    </group>
+  );
+}
+
+/** A friendly, low-poly barista standing behind the counter — idle breathing + a slow head turn. */
+function Barista({ position }: { position: [number, number, number] }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = group.current;
+    if (!g) return;
+    const t = clock.getElapsedTime();
+    g.scale.y = 1 + Math.sin(t * 1.1) * 0.012;
+    g.rotation.y = Math.sin(t * 0.3) * 0.08;
+  });
+  return (
+    <group ref={group} position={position}>
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <cylinderGeometry args={[0.13, 0.15, 0.28, 10]} />
+        <meshStandardMaterial color="#6fa088" {...mat} />
       </mesh>
-      <mesh position={[0, 0.012, 0.28]}>
-        <boxGeometry args={[0.38, 0.024, 0.13]} />
-        <meshStandardMaterial color="#d9d9d9" {...mat} />
+      <mesh position={[0, 0.48, 0]} castShadow>
+        <sphereGeometry args={[0.085, 14, 10]} />
+        <meshStandardMaterial color="#e8b48a" roughness={0.6} flatShading />
       </mesh>
-      <mesh position={[0.3, 0.012, 0.28]}>
-        <boxGeometry args={[0.06, 0.024, 0.09]} />
-        <meshStandardMaterial color="#d9d9d9" {...mat} />
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <sphereGeometry args={[0.088, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1]} />
+        <meshStandardMaterial color={NOGUEIRA} {...mat} />
       </mesh>
+      {[-0.035, 0.035].map((dx) => (
+        <mesh key={dx} position={[dx, 0.485, 0.075]}>
+          <sphereGeometry args={[0.009, 6, 6]} />
+          <meshBasicMaterial color="#2B2729" />
+        </mesh>
+      ))}
+      {[-0.15, 0.15].map((dx) => (
+        <mesh key={dx} position={[dx, 0.3, 0.05]} rotation={[0, 0, dx > 0 ? -0.3 : 0.3]} castShadow>
+          <cylinderGeometry args={[0.03, 0.03, 0.15, 8]} />
+          <meshStandardMaterial color="#6fa088" {...mat} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -178,10 +202,13 @@ function TipJar({ position }: { position: [number, number, number] }) {
 }
 
 /**
- * Delivery counter: a wide flat counter with a register, computer and tip jar.
- * The items prepared at the stations are served on it; tapping the counter
- * (or any item) delivers the order (null preps are valid — delivery is never
- * blocked) and returns to the order board.
+ * Delivery counter: a wide flat counter with a pastry display case, a
+ * cloche, a tip jar, and a barista standing behind it — cozy "neighborhood
+ * shop" composition (docs/superpowers/specs/2026-10-16-cozy-cafe-design.md,
+ * "Fluxo de telas" reference mockups), not a modern POS. The items prepared
+ * at the stations are served on it; tapping the counter (or any item)
+ * delivers the order (null preps are valid — delivery is never blocked) and
+ * returns to the order board.
  */
 export function DeliveryCounter() {
   const deliverOrder = useGameStore((state) => state.deliverOrder);
@@ -221,9 +248,10 @@ export function DeliveryCounter() {
         <meshStandardMaterial color={TOP} {...mat} />
       </mesh>
 
-      <Computer position={[-1.3 * s, TOP_Y, -0.2]} />
-      <CashRegister position={[1.25 * s, TOP_Y, -0.2]} />
-      <TipJar position={[0.7 * s, TOP_Y, -0.3]} />
+      <PastryCase position={[-1.2 * s, TOP_Y, -0.2]} />
+      <Cloche position={[1.1 * s, TOP_Y, -0.15]} />
+      <TipJar position={[0.5 * s, TOP_Y, -0.3]} />
+      <Barista position={[-0.1 * s, TOP_Y, -0.65]} />
 
       {items.map((item, i) => (
         <ServedItem
