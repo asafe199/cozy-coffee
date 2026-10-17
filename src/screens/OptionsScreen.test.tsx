@@ -24,3 +24,11 @@ test('toggles hints and goes back', async () => {
   await fireEvent.press(screen.getByText('Voltar'));
   expect(onBack).toHaveBeenCalled();
 });
+
+test('switches language', async () => {
+  await render(<OptionsScreen onBack={jest.fn()} />);
+  await fireEvent.press(screen.getByLabelText('EN'));
+  expect(useSettingsStore.getState().lang).toBe('en');
+  expect(screen.getByText('Language')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('PT'));
+});

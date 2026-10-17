@@ -15,6 +15,7 @@ type Screen = 'menu' | 'options' | 'instructions' | 'levels' | 'game';
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [ready, setReady] = useState(false);
+  const lang = useSettingsStore((state) => state.lang);
 
   useEffect(() => {
     useSettingsStore.getState().hydrateSettings();
@@ -37,6 +38,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <React.Fragment key={lang}>
       {screen === 'menu' && <MainMenuScreen ready={ready} onStart={() => setScreen('instructions')} onOptions={() => setScreen('options')} />}
       {screen === 'options' && <OptionsScreen onBack={() => setScreen('menu')} />}
       {screen === 'instructions' && (
@@ -46,6 +48,7 @@ export default function App() {
         <LevelSelectScreen onSelectLevel={() => setScreen('game')} onBack={() => setScreen('instructions')} />
       )}
       {screen === 'game' && <GameScreen onExit={() => setScreen('menu')} />}
+      </React.Fragment>
       <StatusBar style="light" />
     </GestureHandlerRootView>
   );
