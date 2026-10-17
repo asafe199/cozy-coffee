@@ -7,7 +7,9 @@ export interface Clock {
   ordersServed: number;
 }
 
-export const ORDERS_PER_SHIFT = 4;
+// Design doc (2026-10-16-cozy-cafe-design.md, Review Focus): "um turno tem
+// no máximo ~10 pedidos no total" — was 4 in the Copilot-added version.
+export const ORDERS_PER_SHIFT = 10;
 export const MINUTES_PER_ORDER = 15;
 export const SHIFT_START: Record<ShiftId, number> = { morning: 8 * 60, afternoon: 14 * 60 };
 
