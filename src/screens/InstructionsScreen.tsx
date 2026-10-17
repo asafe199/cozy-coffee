@@ -1,13 +1,9 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { t } from '../i18n';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 
-const STEPS = [
-  'Leia o pedido no quadro.',
-  'Arraste o copo até a máquina e sirva o café (com açúcar, se pedido).',
-  'Toste o pão e passe manteiga.',
-  'Leve ao balcão e receba sua avaliação.',
-];
+const stepKeys = ['instructionsStep1', 'instructionsStep2', 'instructionsStep3', 'instructionsStep4'] as const;
 
 export function InstructionsScreen({ onContinue, onBack }: { onContinue: () => void; onBack: () => void }) {
   // Font loading never gates rendering; fall back to the system font.
@@ -17,18 +13,18 @@ export function InstructionsScreen({ onContinue, onBack }: { onContinue: () => v
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, font]}>Como jogar</Text>
-        {STEPS.map((step, i) => (
+        <Text style={[styles.title, font]}>{t('instructionsTitle')}</Text>
+        {stepKeys.map((key, i) => (
           <View key={i} style={styles.step}>
             <Text style={[styles.number, font]}>{i + 1}</Text>
-            <Text style={[styles.stepText, font]}>{step}</Text>
+            <Text style={[styles.stepText, font]}>{t(key)}</Text>
           </View>
         ))}
         <Pressable style={styles.primary} onPress={onContinue}>
-          <Text style={[styles.primaryText, font]}>Continuar</Text>
+          <Text style={[styles.primaryText, font]}>{t('continue')}</Text>
         </Pressable>
         <Pressable style={styles.secondary} onPress={onBack}>
-          <Text style={[styles.secondaryText, font]}>Voltar</Text>
+          <Text style={[styles.secondaryText, font]}>{t('back')}</Text>
         </Pressable>
       </ScrollView>
     </View>

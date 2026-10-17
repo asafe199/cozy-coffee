@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { t } from '../i18n';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { useGameStore } from '../state/gameStore';
 import { saveProgress } from '../game/persistence';
@@ -27,19 +28,19 @@ export function MainMenuScreen({ onStart, ready }: { onStart: () => void; ready:
   return (
     <View style={styles.container}>
       <Text style={[styles.logo, font]}>Brewlight</Text>
-      <Text style={[styles.subtitle, font]}>SUA CAFETERIA ACONCHEGANTE</Text>
+      <Text style={[styles.subtitle, font]}>{t('menuSubtitle')}</Text>
       <Pressable style={[styles.primary, !ready && styles.disabled]} onPress={() => ready && onStart()}>
-        <Text style={[styles.primaryText, font]}>Iniciar</Text>
+        <Text style={[styles.primaryText, font]}>{t('menuStart')}</Text>
       </Pressable>
       <Pressable style={[styles.secondary, !ready && styles.disabled]} onPress={handleSave}>
-        <Text style={[styles.secondaryText, font]}>Salvar</Text>
+        <Text style={[styles.secondaryText, font]}>{t('menuSave')}</Text>
       </Pressable>
       {Platform.OS === 'android' && (
         <Pressable style={styles.secondary} onPress={() => BackHandler.exitApp()}>
-          <Text style={[styles.secondaryText, font]}>Sair</Text>
+          <Text style={[styles.secondaryText, font]}>{t('menuExit')}</Text>
         </Pressable>
       )}
-      <Text style={[styles.saved, font, { opacity: saved ? 1 : 0 }]}>{saved ? 'Saved' : ' '}</Text>
+      <Text style={[styles.saved, font, { opacity: saved ? 1 : 0 }]}>{saved ? t('menuSaved') : ' '}</Text>
     </View>
   );
 }

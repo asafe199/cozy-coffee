@@ -1,14 +1,15 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { t } from '../i18n';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 
 const LEVELS = [
-  { level: 1, name: 'Cafeteria simples' },
-  { level: 2, name: 'Cantinho aconchegante' },
-  { level: 3, name: 'Café de bairro' },
-  { level: 4, name: 'Café charmoso' },
-  { level: 5, name: 'Café sofisticado' },
-];
+  { level: 1, key: 'level1Name' },
+  { level: 2, key: 'level2Name' },
+  { level: 3, key: 'level3Name' },
+  { level: 4, key: 'level4Name' },
+  { level: 5, key: 'level5Name' },
+] as const;
 
 export function LevelSelectScreen({
   onSelectLevel,
@@ -23,9 +24,9 @@ export function LevelSelectScreen({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, font]}>Escolha seu nível</Text>
+      <Text style={[styles.title, font]}>{t('levelSelectTitle')}</Text>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
-        {LEVELS.map(({ level, name }) => {
+        {LEVELS.map(({ level, key }) => {
           const unlocked = level === 1;
           return (
             <Pressable
@@ -33,15 +34,15 @@ export function LevelSelectScreen({
               style={[styles.card, !unlocked && styles.locked]}
               onPress={unlocked ? () => onSelectLevel(level) : undefined}
             >
-              <Text style={[styles.cardTitle, font]}>{`Nível ${level}`}</Text>
-              <Text style={[styles.cardName, font]}>{name}</Text>
-              {!unlocked && <Text style={[styles.lockedText, font]}>Bloqueado</Text>}
+              <Text style={[styles.cardTitle, font]}>{`${t('levelLabel')} ${level}`}</Text>
+              <Text style={[styles.cardName, font]}>{t(key)}</Text>
+              {!unlocked && <Text style={[styles.lockedText, font]}>{t('levelLocked')}</Text>}
             </Pressable>
           );
         })}
       </ScrollView>
       <Pressable style={styles.back} onPress={onBack}>
-        <Text style={[styles.backText, font]}>Voltar</Text>
+        <Text style={[styles.backText, font]}>{t('back')}</Text>
       </Pressable>
     </View>
   );

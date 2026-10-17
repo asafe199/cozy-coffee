@@ -38,7 +38,7 @@ test('Salvar saves current day/money and shows Saved', async () => {
   await render(<MainMenuScreen onStart={jest.fn()} ready />);
   await fireEvent.press(screen.getByText('Salvar'));
   expect(saveProgress).toHaveBeenCalledWith({ day: 3, money: 42 });
-  await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('Salvo')).toBeTruthy());
 });
 
 test('Salvar does nothing until ready', async () => {
