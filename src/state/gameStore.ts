@@ -11,6 +11,8 @@ interface GameState {
   scene: SceneId;
   isTransitioning: boolean;
   pendingScene: SceneId | null;
+  // -1/1 slides the transition left/right; 0 is a plain fade.
+  transitionDir: -1 | 0 | 1;
   currentOrder: Order | null;
   /** Orders waiting on the board; the player may pick any of them. */
   queue: Order[];
@@ -32,7 +34,7 @@ interface GameActions {
   beginOrder: (orderId?: string) => SceneId;
   /** A customer arrives: adds an order if the board has room and the shift budget allows. */
   enqueueOrder: () => void;
-  startTransition: (target: SceneId) => void;
+  startTransition: (target: SceneId, dir?: -1 | 0 | 1) => void;
   completeTransition: () => void;
   /** Records the current item's prep and returns the next scene to visit. */
   completeItem: (prep: ItemPrep | null) => SceneId;
@@ -48,6 +50,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   scene: 'orderBoard',
   isTransitioning: false,
   pendingScene: null,
+  transitionDir: 0,
   currentOrder: null,
   queue: [],
   reviews: [],
@@ -96,7 +99,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return stationForItem(order.items[get().itemIndex] ?? order.items[0]);
   },
 
-  startTransition: (target: SceneId) => {
+  startTransition: (target: SceneId, dir: -1 | 0 | 1 = 0) => {
     const state = get();
     if (state.isTransitioning) {
       return; // no-op while already transitioning
@@ -104,6 +107,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       isTransitioning: true,
       pendingScene: target,
+      transitionDir: dir,
     } as Partial<GameStore>);
   },
 

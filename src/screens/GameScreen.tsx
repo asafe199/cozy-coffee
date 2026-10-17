@@ -1,5 +1,6 @@
 import React from 'react';
 import { t } from '../i18n';
+import { neighborScene } from '../game/navigation';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFonts, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { GameScene } from '../scenes/GameScene';
@@ -55,6 +56,14 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       ? `${queue.length} pending`
       : 'Waiting for customers';
 
+  const slide = (dir: -1 | 1) => {
+    const target = neighborScene(scene, dir);
+    if (target && !isTransitioning) {
+      startTransition(target, dir);
+    }
+  };
+  const showArrows = !!currentOrder && !dayOver;
+
   const handlePick = (orderId: string) => {
     if (isTransitioning) {
       return;
@@ -87,6 +96,16 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
       <View style={styles.clock} pointerEvents="none">
         <Text style={styles.hudText}>{`Day ${day} · ${formatClock(clock.minutes)}`}</Text>
       </View>
+      {showArrows && neighborScene(scene, -1) && (
+        <Pressable style={[styles.arrow, styles.arrowLeft]} onPress={() => slide(-1)} hitSlop={12}>
+          <Text style={styles.arrowText}>◀</Text>
+        </Pressable>
+      )}
+      {showArrows && neighborScene(scene, 1) && (
+        <Pressable style={[styles.arrow, styles.arrowRight]} onPress={() => slide(1)} hitSlop={12}>
+          <Text style={styles.arrowText}>▶</Text>
+        </Pressable>
+      )}
       {onExit && (
         <Pressable style={styles.menuButton} onPress={onExit}>
           <Text style={styles.hudText}>{t('gameMenu')}</Text>
@@ -127,6 +146,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   hintText: { color: CREME, fontSize: 15, textAlign: 'center' },
+  arrow: {
+    position: 'absolute',
+    top: '45%',
+    width: 48,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${NOGUEIRA}CC`,
+    borderRadius: 12,
+  },
+  arrowLeft: { left: 8 },
+  arrowRight: { right: 8 },
+  arrowText: { color: AMBAR, fontSize: 22 },
   menuButton: {
     position: 'absolute',
     bottom: 16,
