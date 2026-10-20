@@ -5,7 +5,7 @@ import { useSharedValue, withSpring } from 'react-native-reanimated';
 import { MACHINE_ZONE, SUGAR_ZONE, Zone, resolveDropZone } from './dropZones';
 import { computeSwayAngle } from '../shared/dragSway';
 
-const CUP_ORIGIN = { x: 0, z: 0 };
+const DEFAULT_ORIGIN = { x: 0, z: 0 };
 // Cylinder height 0.12 (see geometry below), so half-height 0.06 sits the
 // cup's base exactly on the counter's top surface (y=0) instead of sunk
 // into it.
@@ -17,6 +17,9 @@ interface CupDraggableProps {
   // Replaces the default cup geometry/material (used by other stations' draggables).
   children?: React.ReactNode;
   y?: number;
+  // Rest position the draggable starts at and springs back to when dropped outside any zone.
+  // Defaults to the table origin, same as every existing draggable (coffee cup, toast bread, etc.).
+  origin?: { x: number; z: number };
 }
 
 type CaptureTarget = {
@@ -59,10 +62,11 @@ export function CupDraggable({
   zones = [MACHINE_ZONE, SUGAR_ZONE],
   children,
   y = CUP_Y,
+  origin = DEFAULT_ORIGIN,
 }: CupDraggableProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const posX = useSharedValue(CUP_ORIGIN.x);
-  const posZ = useSharedValue(CUP_ORIGIN.z);
+  const posX = useSharedValue(origin.x);
+  const posZ = useSharedValue(origin.z);
   const rotZ = useSharedValue(0);
   const posY = useSharedValue(y);
   const rotX = useSharedValue(0);
@@ -111,8 +115,8 @@ export function CupDraggable({
     } else {
       posY.value = withSpring(y);
       rotX.value = withSpring(0);
-      posX.value = withSpring(CUP_ORIGIN.x);
-      posZ.value = withSpring(CUP_ORIGIN.z);
+      posX.value = withSpring(origin.x);
+      posZ.value = withSpring(origin.z);
       onDroppedOn(null);
     }
   };
@@ -202,7 +206,7 @@ export function CupDraggable({
 
       <mesh
         ref={meshRef}
-        position={[CUP_ORIGIN.x, y, CUP_ORIGIN.z]}
+        position={[origin.x, y, origin.z]}
         onPointerDown={(event: ThreeEvent<PointerEvent>) => {
           isDragging.current = true;
           // Record where on the cup the finger actually landed, relative to

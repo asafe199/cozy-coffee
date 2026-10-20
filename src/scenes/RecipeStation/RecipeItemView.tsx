@@ -45,14 +45,19 @@ interface Props {
   fillSeconds?: number;
   // Vertical shift of the whole dish, for parents whose origin isn't its base.
   offsetY?: number;
+  // Pancakes only: lags the "after" model + tint behind `processed` so cooking plays out over
+  // real time instead of swapping instantly. Falls back to `processed` when omitted.
+  cooked?: boolean;
+  tint?: string;
 }
 
 /** The dish as it looks at each step; render as children of a mesh/group at the item's base. */
-export function RecipeItemView({ spec, processed, extraAdded, size = 1, fillSeconds = 1.4, offsetY = 0 }: Props) {
-  const model = processed ? spec.item.after : spec.item.before;
+export function RecipeItemView({ spec, processed, extraAdded, size = 1, fillSeconds = 1.4, offsetY = 0, cooked, tint }: Props) {
+  const ready = cooked ?? processed;
+  const model = ready ? spec.item.after : spec.item.before;
   return (
     <>
-      <ModelParts data={model} scale={spec.item.scale * size} offsetY={offsetY} tint={processed ? spec.item.tintAfter : undefined} />
+      <ModelParts data={model} scale={spec.item.scale * size} offsetY={offsetY} tint={ready ? (tint ?? spec.item.tintAfter) : undefined} />
       {spec.liquidColor && (
         <group scale={size} position={[0, offsetY, 0]}>
           <CoffeeLiquid

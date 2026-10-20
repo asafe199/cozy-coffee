@@ -10,7 +10,8 @@ import { ItemPrep, Recipe } from '../../game/types';
 import { TOAST_BURN_THRESHOLD_MS, TOAST_MIN_MS } from '../../game/review';
 import { ModelParts } from '../shared/props/ModelParts';
 import { CoffeeLiquid } from '../shared/props/CoffeeLiquid';
-import { BREAD, CUP_EMPTY } from '../shared/props/models.generated';
+import { BREAD, CUP_EMPTY, GLASS } from '../shared/props/models.generated';
+import { JUICE_FLAVORS } from '../JuiceStation/flavors';
 
 // Direction A "Madeira & Âmbar" palette.
 const NOGUEIRA = '#4A2F1F';
@@ -26,6 +27,25 @@ function toastTint(prep: ItemPrep | null | undefined): string {
 }
 
 function ServedItem({ recipe, prep, x }: { recipe: Recipe; prep: ItemPrep | null | undefined; x: number }) {
+  if (recipe === 'juice') {
+    const juicePrep = prep?.recipe === 'juice' ? prep : null;
+    const color = juicePrep ? JUICE_FLAVORS[juicePrep.flavor].color : '#8a7a5a';
+    return (
+      <group position={[x, TOP_Y, 0.2]}>
+        {/* saucer */}
+        <mesh position={[0, 0.01, 0]}>
+          <cylinderGeometry args={[0.17, 0.17, 0.02, 16]} />
+          <meshStandardMaterial color={CREME} {...mat} />
+        </mesh>
+        <mesh position={[0, 0.02, 0]}>
+          <ModelParts data={GLASS} scale={0.3} />
+        </mesh>
+        <group position={[0, 0.02, 0]} scale={1.364}>
+          <CoffeeLiquid filled={juicePrep !== null} color={color} baseY={0.015} seconds={0} />
+        </group>
+      </group>
+    );
+  }
   if (recipe !== 'coffee' && recipe !== 'toast') {
     const spec = SPECS[recipe];
     const extraPrep = prep && prep.recipe === recipe && 'extraAdded' in prep ? prep : null;

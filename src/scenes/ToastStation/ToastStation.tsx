@@ -1,5 +1,5 @@
 import { levelConfig } from '../../game/levels';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
@@ -7,19 +7,44 @@ import { Steam } from '../shared/props/Steam';
 import { ReadyMarker } from '../shared/props/ReadyMarker';
 import { ModelParts } from '../shared/props/ModelParts';
 import { BREAD, TOASTER } from '../shared/props/models.generated';
+import { BREAD_SWEET, BREAD_WHEAT, BUTTER_PAT, WHEAT_DECOR } from '../shared/props/toastVariety.generated';
+import type { ModelData } from '../shared/props/modelData';
 import { READY_ZONE } from '../CoffeeStation/dropZones';
 import { BUTTER_ZONE, GRIDDLE_ZONE } from './zones';
+import { toastTint } from './toastTint';
 
 const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
 const zones = [GRIDDLE_ZONE, BUTTER_ZONE, READY_ZONE];
+// How often the bread's tint is recomputed while toasting. A slow color fade
+// over seconds doesn't need per-frame precision, so a plain timer (matching
+// the "lightest thing that reads as smooth" bar, not useFrame) is enough.
+const TINT_TICK_MS = 180;
+
+// Three bread options, always on the counter — purely cosmetic (confirmed
+// with the user: any of them works for any order, same "drag whichever you
+// want" pattern as the juice ingredients). Each keeps its own origin/scale;
+// the default slice is unchanged from before this feature.
+interface BreadOption {
+  key: string;
+  model: ModelData;
+  scale: number;
+  originX: number;
+  originZ: number;
+}
+const BREAD_OPTIONS: BreadOption[] = [
+  { key: 'default', model: BREAD, scale: 0.3, originX: 0, originZ: 0 },
+  { key: 'wheat', model: BREAD_WHEAT, scale: 0.32, originX: -0.35, originZ: 0.4 },
+  { key: 'sweet', model: BREAD_SWEET, scale: 0.34, originX: 0.35, originZ: 0.4 },
+];
 
 /**
- * Toast station: drag the bread onto the griddle, tap the griddle to start
- * toasting, optionally drag the bread to the butter, then drag it onto the
- * READY_ZONE marker to send it on. How long the bread was toasted is measured
- * from the griddle tap to that drop; the player is never blocked or warned —
- * burnt/untoasted bread only shows up in the review. Local state resets on
- * every visit (the scene remounts per visit).
+ * Toast station: drag any of the 3 bread options (BREAD_OPTIONS — cosmetic
+ * choice only, review never checks which one) onto the griddle, tap it to
+ * start toasting, optionally drag that bread to the butter, then drag it onto
+ * the READY_ZONE marker to send it on. How long the bread was toasted is
+ * measured from the griddle tap to that drop; the player is never blocked or
+ * warned — burnt/untoasted bread only shows up in the review. Local state
+ * resets on every visit (the scene remounts per visit).
  */
 export function ToastStation() {
   const completeItem = useGameStore((state) => state.completeItem);
@@ -35,14 +60,36 @@ export function ToastStation() {
   );
 
   const toastStartRef = useRef<number | null>(null);
-  const [breadZone, setBreadZone] = useState<string | null>(null);
+  // One zone per bread option — each is independently draggable, so each needs
+  // its own snapped/unsnapped state (see BREAD_OPTIONS above).
+  const [breadZones, setBreadZones] = useState<Record<string, string | null>>({});
   const [hasTouchedButter, setHasTouchedButter] = useState(false);
   const [toasting, setToasting] = useState(false);
+  const [tint, setTint] = useState('#ffffff');
+
+  // Darkens the bread continuously while toasting, instead of snapping tint
+  // the instant the player taps the griddle — the player can still drag it
+  // off to READY_ZONE at any point mid-fade, nothing here blocks that.
+  useEffect(() => {
+    if (!toasting) {
+      setTint('#ffffff');
+      return;
+    }
+    const tick = () => {
+      const start = toastStartRef.current;
+      setTint(toastTint(start === null ? 0 : Date.now() - start));
+    };
+    tick();
+    const id = setInterval(tick, TINT_TICK_MS);
+    return () => clearInterval(id);
+  }, [toasting]);
 
   // Always completes: an untouched station records a null prep, which the
-  // review treats as a valid worst-case input (never a dead end).
-  const handleDroppedOn = (zoneId: string | null) => {
-    setBreadZone(zoneId);
+  // review treats as a valid worst-case input (never a dead end). Any of the
+  // 3 breads reaching READY_ZONE delivers — whichever one the player actually
+  // dragged there, cosmetic choice only, nothing here scores which model it was.
+  const handleDroppedOn = (key: string) => (zoneId: string | null) => {
+    setBreadZones((prev) => ({ ...prev, [key]: zoneId }));
     if (zoneId === BUTTER_ZONE.id) {
       setHasTouchedButter(true);
     }
@@ -60,7 +107,7 @@ export function ToastStation() {
     }
   };
 
-  const canToast = !toasting && breadZone === GRIDDLE_ZONE.id;
+  const canToast = !toasting && Object.values(breadZones).includes(GRIDDLE_ZONE.id);
 
   const handleToast = () => {
     if (isTransitioning || !canToast) {
@@ -84,15 +131,44 @@ export function ToastStation() {
       </mesh>
       <Steam active={toasting} position={[GRIDDLE_ZONE.x, 0.5, GRIDDLE_ZONE.z]} />
 
-      {/* Butter block, offset beside BUTTER_ZONE's center so the snapped bread doesn't swallow it. */}
+      {/* Real butter pat (hand-modeled — no ready-made CC0 "stick of butter"
+          existed), offset beside BUTTER_ZONE's center so the snapped bread
+          doesn't swallow it. */}
       <mesh position={[BUTTER_ZONE.x, 0.04, BUTTER_ZONE.z + 0.25]}>
-        <boxGeometry args={[0.16, 0.08, 0.1]} />
-        <meshStandardMaterial color="#F7E48A" {...materialProps} />
+        <ModelParts data={BUTTER_PAT} scale={0.17} />
       </mesh>
 
-      <CupDraggable onDroppedOn={handleDroppedOn} zones={zones} y={0.04}>
-        <ModelParts data={BREAD} scale={0.3} offsetY={-0.04} tint={toasting ? '#8a5a3a' : '#ffffff'} />
-      </CupDraggable>
+      {/* Decorative wheat behind the toaster — never draggable, just atmosphere. */}
+      <mesh position={[GRIDDLE_ZONE.x, 0, -0.35]}>
+        <ModelParts data={WHEAT_DECOR} scale={0.5} />
+      </mesh>
+
+      {BREAD_OPTIONS.map(({ key, model, scale, originX, originZ }) => (
+        <CupDraggable
+          key={key}
+          onDroppedOn={handleDroppedOn(key)}
+          zones={zones}
+          origin={{ x: originX, z: originZ }}
+          y={0.04}
+        >
+          {/* offsetY=-0.04 sinks the bread flush onto the counter (cancels
+              CupDraggable's y=0.04 lift) in every other state. GRIDDLE_ZONE
+              rotates the whole mesh 90° about X, which remaps that same
+              y-offset into a z-depth offset instead (rotating a point by 90°
+              about X turns its old y into its new z) — applied there, it would
+              push the standing bread off-center in the toaster's depth instead
+              of sitting flush on anything. So while snapped to the griddle,
+              center it on this bread's own thin axis instead. Only the bread
+              actually in the griddle shows the toasting tint; the other two
+              stay their natural color until it's their turn. */}
+          <ModelParts
+            data={model}
+            scale={scale}
+            offsetY={breadZones[key] === GRIDDLE_ZONE.id ? -(model.height * scale) / 2 : -0.04}
+            tint={breadZones[key] === GRIDDLE_ZONE.id ? tint : '#ffffff'}
+          />
+        </CupDraggable>
+      ))}
 
       <ReadyMarker position={[READY_ZONE.x, 0.06, READY_ZONE.z]} />
     </group>

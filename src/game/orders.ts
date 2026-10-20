@@ -1,5 +1,6 @@
-import { Order, OrderItem, Recipe, SceneId } from './types';
+import { Order, OrderItem, Recipe, SceneId, JuiceFlavor } from './types';
 import { levelConfig, recipesForLevel } from './levels';
+import { JUICE_FLAVOR_IDS } from '../scenes/JuiceStation/flavors';
 
 const STATION: Record<Recipe, SceneId> = {
   coffee: 'coffeeStation',
@@ -28,6 +29,10 @@ function makeItem(recipe: Recipe, rng: () => number): OrderItem {
   const extra = rng() < 0.5;
   if (recipe === 'coffee') return { recipe, wantsSugar: extra };
   if (recipe === 'toast') return { recipe, wantsButter: extra };
+  if (recipe === 'juice') {
+    const flavor = JUICE_FLAVOR_IDS[Math.floor(rng() * JUICE_FLAVOR_IDS.length)];
+    return { recipe, flavor, wantsExtra: extra };
+  }
   return { recipe, wantsExtra: extra };
 }
 
@@ -47,6 +52,8 @@ export interface OrderWords {
   names: Record<Recipe, string>;
   /** Suffix appended when the item has its extra (sugar, butter, ice, honey, dressing). */
   extras: Record<Recipe, string>;
+  /** Juice items are named by their specific flavor, not the generic "Juice". */
+  juiceFlavorNames: Record<JuiceFlavor, string>;
 }
 
 const EN_WORDS: OrderWords = {
@@ -58,8 +65,27 @@ const EN_WORDS: OrderWords = {
     pancakes: ' with honey',
     salad: ' with dressing',
   },
+  juiceFlavorNames: {
+    orange: 'Orange Juice',
+    lemonade: 'Lemonade',
+    watermelon: 'Watermelon Juice',
+    mango: 'Mango Juice',
+    pineapple: 'Pineapple Juice',
+    strawberryBanana: 'Strawberry Banana Smoothie',
+    mangoPineapple: 'Mango Pineapple Juice',
+    milkshakeChocolate: 'Chocolate Milkshake',
+    milkshakeStrawberry: 'Strawberry Milkshake',
+    milkshakeVanilla: 'Vanilla Milkshake',
+  },
 };
 
+function itemName(item: OrderItem, w: OrderWords): string {
+  if (item.recipe === 'juice') {
+    return w.juiceFlavorNames[item.flavor];
+  }
+  return w.names[item.recipe];
+}
+
 export function describeOrder(order: Order, w: OrderWords = EN_WORDS): string {
-  return order.items.map((item) => `${w.names[item.recipe]}${itemWantsExtra(item) ? w.extras[item.recipe] : ''}`).join(' + ');
+  return order.items.map((item) => `${itemName(item, w)}${itemWantsExtra(item) ? w.extras[item.recipe] : ''}`).join(' + ');
 }

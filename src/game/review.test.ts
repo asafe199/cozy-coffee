@@ -86,14 +86,48 @@ test('a mismatched prep type is treated as never prepared', () => {
 });
 
 test('juice without the requested ice loses a star', () => {
-  const order = { id: 'j', items: [{ recipe: 'juice' as const, wantsExtra: true }] };
-  expect(calculateReview(order, [{ recipe: 'juice', extraAdded: true, processMs: 2000 }]).stars).toBe(5);
-  const r = calculateReview(order, [{ recipe: 'juice', extraAdded: false, processMs: 2000 }]);
+  const order = { id: 'j', items: [{ recipe: 'juice' as const, flavor: 'orange' as const, wantsExtra: true }] };
+  expect(
+    calculateReview(order, [{ recipe: 'juice', flavor: 'orange', ingredientsUsed: ['orange'], extraAdded: true, processMs: 2000 }]).stars,
+  ).toBe(5);
+  const r = calculateReview(order, [
+    { recipe: 'juice', flavor: 'orange', ingredientsUsed: ['orange'], extraAdded: false, processMs: 2000 },
+  ]);
   expect(r.stars).toBe(4);
   expect(r.comments).toContain('missing_ice');
 });
 
-test('pancakes can be raw or burned, juice and salad have no timing', () => {
+test('juice with the wrong ingredients loses a star and flags wrong_flavor', () => {
+  const order = { id: 'j2', items: [{ recipe: 'juice' as const, flavor: 'strawberryBanana' as const, wantsExtra: false }] };
+  // Right set regardless of order
+  expect(
+    calculateReview(order, [
+      { recipe: 'juice', flavor: 'strawberryBanana', ingredientsUsed: ['banana', 'strawberry'], extraAdded: false, processMs: 2000 },
+    ]).stars,
+  ).toBe(5);
+  // Missing an ingredient
+  const r = calculateReview(order, [
+    { recipe: 'juice', flavor: 'strawberryBanana', ingredientsUsed: ['strawberry'], extraAdded: false, processMs: 2000 },
+  ]);
+  expect(r.stars).toBe(4);
+  expect(r.comments).toContain('wrong_flavor');
+});
+
+test('juice can be under- or over-blended', () => {
+  const order = { id: 'j3', items: [{ recipe: 'juice' as const, flavor: 'orange' as const, wantsExtra: false }] };
+  expect(
+    calculateReview(order, [
+      { recipe: 'juice', flavor: 'orange', ingredientsUsed: ['orange'], extraAdded: false, processMs: 100 },
+    ]).comments,
+  ).toContain('under_blended');
+  expect(
+    calculateReview(order, [
+      { recipe: 'juice', flavor: 'orange', ingredientsUsed: ['orange'], extraAdded: false, processMs: 20000 },
+    ]).comments,
+  ).toContain('over_blended');
+});
+
+test('pancakes can be raw or burned, salad has no timing', () => {
   const pancakes = { id: 'p', items: [{ recipe: 'pancakes' as const, wantsExtra: false }] };
   expect(calculateReview(pancakes, [{ recipe: 'pancakes', extraAdded: false, processMs: 100 }]).comments).toContain('raw_pancakes');
   expect(calculateReview(pancakes, [{ recipe: 'pancakes', extraAdded: false, processMs: 20000 }]).comments).toContain('burned_pancakes');

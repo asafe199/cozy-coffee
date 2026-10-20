@@ -5,6 +5,7 @@ import { OrderBoard } from './OrderBoard/OrderBoard';
 import { CoffeeStation } from './CoffeeStation/CoffeeStation';
 import { DeliveryCounter } from './DeliveryCounter/DeliveryCounter';
 import { ToastStation } from './ToastStation/ToastStation';
+import { JuiceStation } from './JuiceStation/JuiceStation';
 import { CameraRig } from './shared/CameraRig';
 import { levelConfig } from '../game/levels';
 import { RecipeStation } from './RecipeStation/RecipeStation';
@@ -12,7 +13,6 @@ import { sceneX } from './shared/world';
 import type { ExtraRecipe, SceneId } from '../game/types';
 
 const EXTRA_STATIONS: { scene: SceneId; recipe: ExtraRecipe }[] = [
-  { scene: 'juiceStation', recipe: 'juice' },
   { scene: 'pancakeStation', recipe: 'pancakes' },
   { scene: 'saladStation', recipe: 'salad' },
 ];
@@ -51,6 +51,9 @@ export function GameScene() {
       </group>
       <group position={[sceneX('toastStation', level), 0, 0]}>
         <ToastStation key={stationKey} />
+      </group>
+      <group position={[sceneX('juiceStation', level), 0, 0]}>
+        <JuiceStation key={stationKey} />
       </group>
       {EXTRA_STATIONS.map(({ scene: id, recipe }) => (
         <group key={id} position={[sceneX(id, level), 0, 0]}>

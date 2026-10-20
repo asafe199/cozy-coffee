@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { SceneId, Order, ItemPrep, ReviewResult } from '../game/types';
-import { generateOrder, stationForItem } from '../game/orders';
+import { describeOrder, generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
 import { Clock, advanceClock, initialClock } from '../game/shift';
 import { orderValue } from '../game/menu';
+import { orderWords } from '../i18n';
 import { clampLevel, levelConfig } from '../game/levels';
 import { canEnqueue, takeFromQueue } from '../game/queue';
 import { saveProgress, PersistedProgress } from '../game/persistence';
@@ -146,7 +147,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!state.currentOrder) {
       return; // no-op if there's no order to deliver
     }
-    const review = calculateReview(state.currentOrder, state.preps);
+    const review = { ...calculateReview(state.currentOrder, state.preps), summary: describeOrder(state.currentOrder, orderWords()) };
     const earned = orderValue(state.currentOrder, levelConfig(state.level).priceMultiplier);
     const { clock, dayEnded } = advanceClock(state.clock, levelConfig(state.level).ordersPerShift);
     set({

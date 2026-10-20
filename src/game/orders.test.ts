@@ -50,8 +50,15 @@ test('level 5 orders can include every recipe and route to their stations', () =
   }
   expect([...seen].sort()).toEqual(['coffee', 'juice', 'pancakes', 'salad', 'toast']);
   expect(stationForItem({ recipe: 'salad', wantsExtra: true })).toBe('saladStation');
+  expect(stationForItem({ recipe: 'juice', flavor: 'orange', wantsExtra: true })).toBe('juiceStation');
 });
 
 test('describeOrder names the extras', () => {
   expect(describeOrder({ id: 'x', items: [{ recipe: 'pancakes', wantsExtra: true }] })).toBe('Pancakes with honey');
+});
+
+test('describeOrder uses the specific flavor name for juice items, not a generic "Juice"', () => {
+  expect(
+    describeOrder({ id: 'x', items: [{ recipe: 'juice', flavor: 'lemonade', wantsExtra: true }] }),
+  ).toBe('Lemonade with ice');
 });

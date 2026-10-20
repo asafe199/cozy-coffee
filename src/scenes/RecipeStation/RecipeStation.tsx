@@ -1,16 +1,37 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { levelConfig } from '../../game/levels';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
 import { CupDraggable } from '../CoffeeStation/CupDraggable';
 import { ReadyMarker } from '../shared/props/ReadyMarker';
 import { ModelParts } from '../shared/props/ModelParts';
+import { Flame } from '../shared/props/Flame';
 import { RecipeItemView } from './RecipeItemView';
 import { SPECS } from './specs';
 import { READY_ZONE } from '../CoffeeStation/dropZones';
+import { TOAST_MIN_MS, TOAST_BURN_THRESHOLD_MS } from '../../game/review';
 import type { ExtraRecipe } from '../../game/types';
 
 const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
+const BURN_DARK = '#2a1810';
+
+function lerpHex(a: string, b: string, t: number): string {
+  const ah = parseInt(a.slice(1), 16);
+  const bh = parseInt(b.slice(1), 16);
+  const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+  const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const b2 = Math.round(ab + (bb - ab) * t);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b2).toString(16).slice(1)}`;
+}
+
+// Pancakes-only: gold at TOAST_MIN_MS (just cooked), gradually darkening to burnt by
+// TOAST_BURN_THRESHOLD_MS, mirroring the toast station's time-based doneness.
+function cookTintFor(elapsedMs: number, baseTint: string): string {
+  const t = Math.min(1, Math.max(0, (elapsedMs - TOAST_MIN_MS) / (TOAST_BURN_THRESHOLD_MS - TOAST_MIN_MS)));
+  return lerpHex(baseTint, BURN_DARK, t);
+}
 
 /**
  * Generic station for juice, pancakes and salad: drag the item onto the
@@ -37,6 +58,25 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
   const [itemZone, setItemZone] = useState<string | null>(null);
   const [extraAdded, setExtraAdded] = useState(false);
   const [processed, setProcessed] = useState(false);
+  // Pancakes only: the "after" model/tint lag behind `processed` by real time (see cookTintFor).
+  const [cooked, setCooked] = useState(false);
+  const [cookTint, setCookTint] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!processed || !spec.appliance.heated) {
+      return;
+    }
+    const tick = () => {
+      const start = startRef.current;
+      if (start === null) return;
+      const elapsed = Date.now() - start;
+      setCooked(elapsed >= TOAST_MIN_MS);
+      setCookTint(cookTintFor(elapsed, spec.item.tintAfter ?? '#ffffff'));
+    };
+    tick();
+    const id = setInterval(tick, 180);
+    return () => clearInterval(id);
+  }, [processed, spec.appliance.heated, spec.item.tintAfter]);
 
   const handleDroppedOn = (zoneId: string | null) => {
     setItemZone(zoneId);
@@ -74,6 +114,13 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
         <ModelParts data={spec.appliance.model} scale={spec.appliance.scale} offsetY={spec.appliance.offsetY} />
       </mesh>
 
+      {spec.appliance.heated && (
+        <Flame
+          active={processed && itemZone === spec.applianceZone.id}
+          position={[spec.applianceZone.x, 0.02, spec.appliance.z]}
+        />
+      )}
+
       {spec.extraProp.model ? (
         <mesh position={[spec.extraZone.x, 0, spec.extraZone.z + 0.25]}>
           <ModelParts data={spec.extraProp.model} scale={spec.extraProp.scale} />
@@ -95,7 +142,14 @@ export function RecipeStation({ recipe }: { recipe: ExtraRecipe }) {
       )}
 
       <CupDraggable onDroppedOn={handleDroppedOn} zones={[spec.applianceZone, spec.extraZone, READY_ZONE]} y={0.02}>
-        <RecipeItemView spec={spec} processed={processed} extraAdded={extraAdded} offsetY={-0.02} />
+        <RecipeItemView
+          spec={spec}
+          processed={processed}
+          extraAdded={extraAdded}
+          offsetY={-0.02}
+          cooked={spec.appliance.heated ? cooked : undefined}
+          tint={spec.appliance.heated ? cookTint : undefined}
+        />
       </CupDraggable>
 
       <ReadyMarker position={[READY_ZONE.x, 0.06, READY_ZONE.z]} />

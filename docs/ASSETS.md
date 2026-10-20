@@ -24,3 +24,71 @@ so always pass every model name in one run:
       OIL="$F/bottle-oil.glb" CUTTING_BOARD="$F/cutting-board.glb"
 
 (`/tmp/cv` = a folder with `pngjs` installed; download the kits from kenney.nl.)
+
+## Coffee machine tiers (per-level appliance progression)
+
+Pilot for the "appliance gets fancier each level" idea (`CLAUDE.md` "Not yet
+done" list). Level 1 keeps the Kenney `COFFEE_MACHINE` above, unchanged.
+Levels 2-5 are baked into `src/scenes/shared/props/coffeeMachineTiers.generated.ts`
+from models found on [Poly Pizza](https://poly.pizza) via the Blender MCP's
+`search_assets`/`import_asset`, exported from Blender as individual `.glb`
+files (forcing any JPEG textures to PNG first — `scripts/convert-glb.cjs` only
+decodes PNG), then run through the same converter:
+
+    NODE_PATH=/tmp/cv/node_modules node scripts/convert-glb.cjs src/scenes/shared/props/coffeeMachineTiers.generated.ts \
+      COFFEE_MACHINE_L2=coffee_l2_espresso_pot.glb COFFEE_MACHINE_L3=coffee_l3_jtoastie.glb \
+      COFFEE_MACHINE_L4=coffee_l4_daqian.glb COFFEE_MACHINE_L5=coffee_l5_gold.glb
+
+Per-level model + scale lookup lives in `src/scenes/CoffeeStation/applianceTiers.ts`.
+
+**CC-BY 3.0 attribution (required — also surfaced in-app under Options →
+Créditos/Credits, `OptionsScreen.tsx`):**
+- Level 2 — "Espresso Pot" by Poly by Google, https://poly.pizza/m/fsqUynYjKyA
+- Level 3 — "Coffee Machine" by J-Toastie, https://poly.pizza/m/7kKSsnCcNC
+- Level 4 — "Coffee Maker" by Daqian Dong, https://poly.pizza/m/f9PvGRKy5NJ
+- Level 5 — same mesh as level 4 (Daqian Dong), recolored gold/brass in
+  Blender (texture swapped for a flat metallic material) — same attribution
+  applies since the geometry is unchanged.
+
+Toaster and blender tiers are a planned follow-up (same process, one
+appliance at a time), not done yet.
+
+## Juice/milkshake ingredient baskets
+
+Baked into `src/scenes/shared/props/juiceIngredients.generated.ts` — one
+"basket" per ingredient (a bowl with 1-3 of that ingredient resting in it),
+for the upcoming multi-fruit juice station (see
+`docs/superpowers/specs/2026-10-20-juice-milkshake-and-review-history-design.md`,
+Part A). All CC0 — no attribution legally required, listed here anyway for
+traceability:
+
+- Bowl — "Bowl Small" by Kay Lousberg, https://poly.pizza/m/IRGuF4UebO
+- Orange — "Orange" by Kenney, https://poly.pizza/m/UnygaDfm1J
+- Lemon — "Lemon" by Kenney, https://poly.pizza/m/MSMJRlLpuL
+- Watermelon — "Watermelon" by Kenney, https://poly.pizza/m/lJIfjMl47l
+- Pineapple — "Pineapple" by Kenney, https://poly.pizza/m/VFFBOLXqB2
+- Strawberry — "Strawberry" by Kenney, https://poly.pizza/m/xT1XIhtdju
+- Banana — "Banana" by Kenney, https://poly.pizza/m/5Z07I9KMob
+- Chocolate — "Chocolate Bar" by Quaternius, https://poly.pizza/m/vJsJ1EIiOO
+- Mango, Vanilla — no ready-made CC0 model found; hand-modeled from
+  primitives directly in Blender (simple flat-colored shapes, same low-poly
+  style as the rest).
+
+These are baked geometry only — the actual `JuiceStation` scene, the
+flavor/ingredient data model, and the drag-into-blender mechanic described in
+the design doc are not built yet.
+
+## Toast station bread variety
+
+Baked into `src/scenes/shared/props/toastVariety.generated.ts` — purely
+cosmetic (confirmed with the user: bread choice never affects scoring, same
+interaction pattern as the juice ingredients — drag whichever one you want
+onto the griddle). All CC0:
+
+- `BREAD_WHEAT` — "Loaf Round" by Kenney, https://poly.pizza/m/4BiXgXnxTY
+- `BREAD_SWEET` — "Croissant" by Kenney, https://poly.pizza/m/JDy2TUxcV2
+- `WHEAT_DECOR` — "Wheat" by Quaternius, https://poly.pizza/m/lPspzfC8Pu (static decoration behind the toaster, not draggable)
+- `BUTTER_PAT` — no ready-made CC0 "stick of butter" model found anywhere searched; hand-modeled in Blender (beveled box, one corner sliced off) to replace the old flat-colored box placeholder.
+
+The original bread slice (`BREAD` in `models.generated.ts`) stays as the
+default/first option.

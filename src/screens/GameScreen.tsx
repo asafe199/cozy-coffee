@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { t, tf, orderWords } from '../i18n';
 import { HintBanner } from './HintBanner';
 import { useSettingsStore } from '../game/settings';
@@ -12,6 +12,7 @@ import { formatClock } from '../game/shift';
 import { describeOrder } from '../game/orders';
 import { useOrderArrivals } from '../state/useOrderArrivals';
 import { OrderQueueOverlay } from './OrderQueueOverlay';
+import { ReviewHistoryOverlay } from './ReviewHistoryOverlay';
 
 // Direction A "Madeira & Âmbar" palette (docs/superpowers/specs/2026-10-16-brewlight-menu-tipografia.md).
 const NOGUEIRA = '#4A2F1F';
@@ -36,6 +37,7 @@ const HINTS = {
 
 export function GameScreen({ onExit }: { onExit?: () => void }) {
   const [fontsLoaded] = useFonts({ Figtree_600SemiBold });
+  const [showReviewHistory, setShowReviewHistory] = useState(false);
   useOrderArrivals();
   const reviews = useGameStore((state) => state.reviews);
   const lastStars = reviews[reviews.length - 1]?.stars;
@@ -86,11 +88,11 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
     <View style={styles.container}>
       <GameScene />
       <FadeTransition />
-      <View style={styles.hud} pointerEvents="none">
+      <Pressable style={styles.hud} onPress={() => setShowReviewHistory(true)}>
         <Text style={styles.hudText}>
           {lastStars ? `${'★'.repeat(lastStars)}${'☆'.repeat(5 - lastStars)}` : t('hudNoReviews')}
         </Text>
-      </View>
+      </Pressable>
       {scene === 'orderBoard' && (
         <View style={styles.orderLabel} pointerEvents="none">
           <Text style={styles.orderLabelText}>{orderLabel}</Text>
@@ -132,6 +134,9 @@ export function GameScreen({ onExit }: { onExit?: () => void }) {
             </Pressable>
           </View>
         </View>
+      )}
+      {showReviewHistory && (
+        <ReviewHistoryOverlay reviews={dayReviews} onClose={() => setShowReviewHistory(false)} />
       )}
     </View>
   );

@@ -8,8 +8,9 @@ import { CoffeeDecor } from '../shared/props/CoffeeDecor';
 import { ModelParts } from '../shared/props/ModelParts';
 import { CoffeeLiquid, PourStream } from '../shared/props/CoffeeLiquid';
 import { ReadyMarker } from '../shared/props/ReadyMarker';
-import { COFFEE_MACHINE, CUP_EMPTY } from '../shared/props/models.generated';
+import { CUP_EMPTY } from '../shared/props/models.generated';
 import { MACHINE_ZONE, READY_ZONE, SUGAR_ZONE } from './dropZones';
+import { coffeeMachineTier } from './applianceTiers';
 
 // Direction A "Madeira & Âmbar" palette.
 const CREME = '#F6E3C7';
@@ -34,6 +35,7 @@ export function CoffeeStation() {
   const isTransitioning = useGameStore((state) => state.isTransitioning);
   const level = useGameStore((state) => state.level);
   const { tableScale, tableColor } = levelConfig(level);
+  const machineTier = coffeeMachineTier(level);
   // Done only counts at the station the current item belongs to (the player can pan anywhere).
   const isActive = useGameStore(
     (state) =>
@@ -89,7 +91,7 @@ export function CoffeeStation() {
           MACHINE_ZONE. Its position is independent of the zone's z — the zone
           is the cup's snap target in front of the spout (see dropZones.ts). */}
       <mesh position={[MACHINE_ZONE.x, 0, 0]} onPointerDown={handlePour}>
-        <ModelParts data={COFFEE_MACHINE} scale={0.75} />
+        <ModelParts data={machineTier.model} scale={machineTier.scale} />
       </mesh>
 
       <PourStream active={poured} position={[MACHINE_ZONE.x, 0.4, MACHINE_ZONE.z]} length={0.26} />
