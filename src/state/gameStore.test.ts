@@ -3,7 +3,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 import { useGameStore, GameStore } from './gameStore';
 import { Order } from '../game/types';
-import { initialClock, ORDERS_PER_SHIFT } from '../game/shift';
+import { initialClock, ORDERS_PER_SHIFT_MIN } from '../game/shift';
 
 const initialStateValues = {
   scene: 'orderBoard' as const,
@@ -20,6 +20,9 @@ const initialStateValues = {
   dayEarnings: 0,
   dayReviews: [],
   money: 0,
+  // Fixed (not random) so tests that don't care about shift size stay deterministic;
+  // tests that do care (shift/day rollover) read the live value instead of this.
+  ordersPerShift: ORDERS_PER_SHIFT_MIN,
 };
 
 const comboOrder: Order = {
@@ -183,15 +186,18 @@ test('delivering earns money and advances the clock', () => {
 });
 
 test('serving a full day (two shifts) ends the day', () => {
-  serveOrders(ORDERS_PER_SHIFT);
+  // Each shift rolls its own random order count (10-30) — read it live rather
+  // than assuming a fixed size, including the afternoon's own fresh roll.
+  serveOrders(useGameStore.getState().ordersPerShift);
   expect(useGameStore.getState().clock.shift).toBe('afternoon');
   expect(useGameStore.getState().dayOver).toBe(false);
-  serveOrders(ORDERS_PER_SHIFT);
+  serveOrders(useGameStore.getState().ordersPerShift);
   expect(useGameStore.getState().dayOver).toBe(true);
 });
 
 test('startNextDay resets the day but keeps money and lifetime reviews', () => {
-  serveOrders(ORDERS_PER_SHIFT * 2);
+  serveOrders(useGameStore.getState().ordersPerShift);
+  serveOrders(useGameStore.getState().ordersPerShift);
   const before = useGameStore.getState();
   useGameStore.getState().startNextDay();
   const s = useGameStore.getState();

@@ -9,8 +9,17 @@ export interface Clock {
 
 // Design doc (2026-10-16-cozy-cafe-design.md, Review Focus): "um turno tem
 // no máximo ~10 pedidos no total" — was 4 in the Copilot-added version.
+// Superseded by a random range per shift (author request: busier, more varied
+// shifts) — kept as the default for callers that don't pass an explicit count.
 export const ORDERS_PER_SHIFT = 10;
+export const ORDERS_PER_SHIFT_MIN = 10;
+export const ORDERS_PER_SHIFT_MAX = 30;
 export const MINUTES_PER_ORDER = 15;
+
+/** A fresh shift's order budget — rolled once per shift, not per order. */
+export function randomOrdersPerShift(rng: () => number = Math.random): number {
+  return ORDERS_PER_SHIFT_MIN + Math.floor(rng() * (ORDERS_PER_SHIFT_MAX - ORDERS_PER_SHIFT_MIN + 1));
+}
 export const SHIFT_START: Record<ShiftId, number> = { morning: 8 * 60, afternoon: 14 * 60 };
 
 export function initialClock(): Clock {

@@ -6,7 +6,7 @@ import { CupDraggable } from '../CoffeeStation/CupDraggable';
 import { Steam } from '../shared/props/Steam';
 import { ReadyMarker } from '../shared/props/ReadyMarker';
 import { ModelParts } from '../shared/props/ModelParts';
-import { BREAD, TOASTER } from '../shared/props/models.generated';
+import { BOWL, BREAD, TOASTER } from '../shared/props/models.generated';
 import { BREAD_SWEET, BREAD_WHEAT, BUTTER_PAT, WHEAT_DECOR } from '../shared/props/toastVariety.generated';
 import type { ModelData } from '../shared/props/modelData';
 import { READY_ZONE } from '../CoffeeStation/dropZones';
@@ -20,21 +20,23 @@ const zones = [GRIDDLE_ZONE, BUTTER_ZONE, READY_ZONE];
 // the "lightest thing that reads as smooth" bar, not useFrame) is enough.
 const TINT_TICK_MS = 180;
 
-// Three bread options, always on the counter — purely cosmetic (confirmed
-// with the user: any of them works for any order, same "drag whichever you
-// want" pattern as the juice ingredients). Each keeps its own origin/scale;
-// the default slice is unchanged from before this feature.
+// Three bread options, lined up inside one basket on the counter — purely
+// cosmetic (confirmed with the user: any of them works for any order, same
+// "drag whichever you want" pattern as the juice ingredients).
 interface BreadOption {
   key: string;
   model: ModelData;
   scale: number;
   originX: number;
-  originZ: number;
 }
+const BREAD_BASKET: [number, number, number] = [0.45, 0, -0.45];
+const BREAD_BASKET_SCALE = 0.75;
+// Resting height inside the basket; a dropped bread springs back to here.
+const BREAD_Y = 0.18;
 const BREAD_OPTIONS: BreadOption[] = [
-  { key: 'default', model: BREAD, scale: 0.3, originX: 0, originZ: 0 },
-  { key: 'wheat', model: BREAD_WHEAT, scale: 0.32, originX: -0.35, originZ: 0.4 },
-  { key: 'sweet', model: BREAD_SWEET, scale: 0.34, originX: 0.35, originZ: 0.4 },
+  { key: 'default', model: BREAD, scale: 0.22, originX: 0.23 },
+  { key: 'wheat', model: BREAD_WHEAT, scale: 0.24, originX: 0.45 },
+  { key: 'sweet', model: BREAD_SWEET, scale: 0.26, originX: 0.67 },
 ];
 
 /**
@@ -135,7 +137,7 @@ export function ToastStation() {
           existed), offset beside BUTTER_ZONE's center so the snapped bread
           doesn't swallow it. */}
       <mesh position={[BUTTER_ZONE.x, 0.04, BUTTER_ZONE.z + 0.25]}>
-        <ModelParts data={BUTTER_PAT} scale={0.17} />
+        <ModelParts data={BUTTER_PAT} scale={0.26} />
       </mesh>
 
       {/* Decorative wheat behind the toaster — never draggable, just atmosphere. */}
@@ -143,16 +145,23 @@ export function ToastStation() {
         <ModelParts data={WHEAT_DECOR} scale={0.5} />
       </mesh>
 
-      {BREAD_OPTIONS.map(({ key, model, scale, originX, originZ }) => (
+      {/* Bread basket: the three options sit in it instead of lying loose on the
+          counter. Squashed vertically into a shallow basket so the bread resting
+          in it still reads from the player's angle instead of sinking out of sight. */}
+      <mesh position={BREAD_BASKET} scale={[1, 0.5, 1]}>
+        <ModelParts data={BOWL} scale={BREAD_BASKET_SCALE} />
+      </mesh>
+
+      {BREAD_OPTIONS.map(({ key, model, scale, originX }) => (
         <CupDraggable
           key={key}
           onDroppedOn={handleDroppedOn(key)}
           zones={zones}
-          origin={{ x: originX, z: originZ }}
-          y={0.04}
+          origin={{ x: originX, z: BREAD_BASKET[2] }}
+          y={BREAD_Y}
         >
-          {/* offsetY=-0.04 sinks the bread flush onto the counter (cancels
-              CupDraggable's y=0.04 lift) in every other state. GRIDDLE_ZONE
+          {/* offsetY=-0.04 settles the bread into the basket (just under its
+              BREAD_Y resting height) in every other state. GRIDDLE_ZONE
               rotates the whole mesh 90° about X, which remaps that same
               y-offset into a z-depth offset instead (rotating a point by 90°
               about X turns its old y into its new z) — applied there, it would

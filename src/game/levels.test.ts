@@ -19,9 +19,8 @@ test('upgrade needs money and the full version', () => {
 
 import { levelConfig, clampLevel } from './levels';
 
-test('every level has a config and orders grow with level', () => {
-  for (let l = 1; l <= MAX_LEVEL; l++) expect(levelConfig(l).ordersPerShift).toBeGreaterThan(0);
-  expect(levelConfig(5).ordersPerShift).toBeGreaterThan(levelConfig(1).ordersPerShift);
+test('every level has a config and prices grow with level', () => {
+  for (let l = 1; l <= MAX_LEVEL; l++) expect(levelConfig(l).maxItemsPerOrder).toBeGreaterThan(0);
   expect(levelConfig(5).priceMultiplier).toBeGreaterThan(levelConfig(1).priceMultiplier);
   expect(clampLevel(99)).toBe(MAX_LEVEL);
   expect(clampLevel(0)).toBe(1);

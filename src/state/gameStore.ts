@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { SceneId, Order, ItemPrep, ReviewResult } from '../game/types';
 import { describeOrder, generateOrder, stationForItem } from '../game/orders';
 import { calculateReview } from '../game/review';
-import { Clock, advanceClock, initialClock } from '../game/shift';
+import { Clock, advanceClock, initialClock, randomOrdersPerShift } from '../game/shift';
 import { orderValue } from '../game/menu';
 import { orderWords } from '../i18n';
 import { clampLevel, levelConfig } from '../game/levels';
@@ -28,6 +28,8 @@ interface GameState {
   dayReviews: ReviewResult[];
   money: number;
   level: number;
+  /** Rolled once per shift (10-30, random) — see randomOrdersPerShift. */
+  ordersPerShift: number;
 }
 
 interface GameActions {
@@ -68,6 +70,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dayReviews: [],
   money: 0,
   level: 1,
+  ordersPerShift: randomOrdersPerShift(),
 
   // Actions
   requestNextOrder: () => {
@@ -80,7 +83,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   enqueueOrder: () => {
     const state = get();
-    if (state.dayOver || !canEnqueue(state.queue.length, state.currentOrder !== null, state.clock.ordersServed, levelConfig(state.level).ordersPerShift)) {
+    if (state.dayOver || !canEnqueue(state.queue.length, state.currentOrder !== null, state.clock.ordersServed, state.ordersPerShift)) {
       return;
     }
     set({ queue: [...state.queue, generateOrder(Math.random, state.level)] } as Partial<GameStore>);
@@ -149,7 +152,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const review = { ...calculateReview(state.currentOrder, state.preps), summary: describeOrder(state.currentOrder, orderWords()) };
     const earned = orderValue(state.currentOrder, levelConfig(state.level).priceMultiplier);
-    const { clock, dayEnded } = advanceClock(state.clock, levelConfig(state.level).ordersPerShift);
+    const { clock, dayEnded } = advanceClock(state.clock, state.ordersPerShift);
+    // A new shift (morning -> afternoon) gets its own random order budget.
+    const startingNewShift = !dayEnded && clock.shift !== state.clock.shift;
     set({
       reviews: [...state.reviews, review],
       dayReviews: [...state.dayReviews, review],
@@ -160,6 +165,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentOrder: null,
       itemIndex: 0,
       preps: [],
+      ...(startingNewShift ? { ordersPerShift: randomOrdersPerShift() } : null),
     } as Partial<GameStore>);
     saveProgress({ day: get().day, money: get().money });
   },
@@ -171,6 +177,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       day: get().day + 1,
       clock: initialClock(),
+      ordersPerShift: randomOrdersPerShift(),
       dayOver: false,
       dayEarnings: 0,
       dayReviews: [],
@@ -190,6 +197,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       itemIndex: 0,
       preps: [],
       clock: initialClock(),
+      ordersPerShift: randomOrdersPerShift(),
       dayOver: false,
       dayEarnings: 0,
       dayReviews: [],

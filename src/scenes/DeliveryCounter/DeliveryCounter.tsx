@@ -12,11 +12,13 @@ import { ModelParts } from '../shared/props/ModelParts';
 import { CoffeeLiquid } from '../shared/props/CoffeeLiquid';
 import { BREAD, CUP_EMPTY, GLASS } from '../shared/props/models.generated';
 import { JUICE_FLAVORS } from '../JuiceStation/flavors';
+import { counterTier } from './counterTiers';
 
 // Direction A "Madeira & Âmbar" palette.
 const NOGUEIRA = '#4A2F1F';
 const TOP = '#B07A3A';
 const CREME = '#F6E3C7';
+const AMBAR = '#F3B45A';
 const mat = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
 
 const TOP_Y = 0.78;
@@ -197,15 +199,32 @@ function Barista({ position }: { position: [number, number, number] }) {
 
 const CUSTOMER_SHIRTS = ['#c85c4f', '#8a6fb0', '#d9a768'];
 
-/** A customer waiting in line — same low-poly build as the barista, idly shifting weight. */
+/**
+ * A customer waiting in line — same low-poly build as the barista, idly
+ * shifting weight. The head turns independently (looking around the shop)
+ * and one arm lifts in a slow, periodic gesture (checking a phone, waving at
+ * the barista) — both driven by `phase` so customers in the same line never
+ * move in sync.
+ */
 function WaitingCustomer({ position, shirt, phase }: { position: [number, number, number]; shirt: string; phase: number }) {
   const group = useRef<THREE.Group>(null);
+  const head = useRef<THREE.Group>(null);
+  const arm = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
-    const g = group.current;
-    if (!g) return;
     const t = clock.getElapsedTime() + phase;
-    g.scale.y = 1 + Math.sin(t * 1.0) * 0.012;
-    g.rotation.y = Math.sin(t * 0.25) * 0.1;
+    if (group.current) {
+      group.current.scale.y = 1 + Math.sin(t * 1.0) * 0.012;
+      group.current.rotation.y = Math.sin(t * 0.25) * 0.1;
+    }
+    if (head.current) {
+      head.current.rotation.y = Math.sin(t * 0.35 + 1) * 0.5;
+      head.current.rotation.x = Math.sin(t * 0.5) * 0.06;
+    }
+    if (arm.current) {
+      // Rests down (0.3 rad out from the body) most of the time, lifts toward
+      // a point/wave every so often — Math.max clips the sine to a brief hold.
+      arm.current.rotation.z = 0.3 + Math.max(0, Math.sin(t * 0.6)) * 1.1;
+    }
   });
   return (
     <group ref={group} position={position}>
@@ -213,14 +232,31 @@ function WaitingCustomer({ position, shirt, phase }: { position: [number, number
         <cylinderGeometry args={[0.13, 0.15, 0.28, 10]} />
         <meshStandardMaterial color={shirt} {...mat} />
       </mesh>
-      <mesh position={[0, 0.48, 0]} castShadow>
-        <sphereGeometry args={[0.085, 14, 10]} />
-        <meshStandardMaterial color="#e8b48a" roughness={0.6} flatShading />
-      </mesh>
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <sphereGeometry args={[0.088, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1]} />
-        <meshStandardMaterial color={NOGUEIRA} {...mat} />
-      </mesh>
+      <group ref={head} position={[0, 0.28, 0]}>
+        <mesh position={[0, 0.2, 0]} castShadow>
+          <sphereGeometry args={[0.085, 14, 10]} />
+          <meshStandardMaterial color="#e8b48a" roughness={0.6} flatShading />
+        </mesh>
+        <mesh position={[0, 0.22, 0]} castShadow>
+          <sphereGeometry args={[0.088, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1]} />
+          <meshStandardMaterial color={NOGUEIRA} {...mat} />
+        </mesh>
+      </group>
+      {/* Pivoted from the shoulder (group origin), not the cylinder's own
+          centre — the mesh sits offset below the group so rotating the group
+          swings the arm naturally instead of see-sawing through the body. */}
+      <group ref={arm} position={[-0.15, 0.375, 0.05]} rotation={[0, 0, 0.3]}>
+        <mesh position={[0, -0.075, 0]} castShadow>
+          <cylinderGeometry args={[0.03, 0.03, 0.15, 8]} />
+          <meshStandardMaterial color={shirt} {...mat} />
+        </mesh>
+      </group>
+      <group position={[0.15, 0.375, 0.05]} rotation={[0, 0, -0.3]}>
+        <mesh position={[0, -0.075, 0]} castShadow>
+          <cylinderGeometry args={[0.03, 0.03, 0.15, 8]} />
+          <meshStandardMaterial color={shirt} {...mat} />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -260,6 +296,12 @@ function TipJar({ position }: { position: [number, number, number] }) {
  * at MAX_WAITING_CUSTOMERS). The items prepared at the stations are served
  * on it; tapping the counter (or any item) delivers the order (null preps
  * are valid — delivery is never blocked) and returns to the order board.
+ *
+ * Pilot for the "cafe gets fancier each level" shape+decor progression
+ * (counterTiers.ts) — trim, kickplate, corner accents and a two-tone panel
+ * stack up cumulatively, alongside a floor plant / hanging light / wall
+ * piece that each get a nicer model at higher levels. If this reads well,
+ * the same tier pattern extends to the other stations next.
  */
 // Waiting customers are a visual read of queue length, not every order in
 // it — capped so a long queue doesn't crowd the scene into clutter.
@@ -285,6 +327,7 @@ export function DeliveryCounter() {
   const level = useGameStore((state) => state.level);
   const { tableScale: s, tableColor } = levelConfig(level);
   const planks = Math.round(12 * s);
+  const tier = counterTier(level);
 
   return (
     <group>
@@ -303,6 +346,55 @@ export function DeliveryCounter() {
         <boxGeometry args={[3.8 * s, 0.04, 1.1 * s]} />
         <meshStandardMaterial color={TOP} {...mat} />
       </mesh>
+
+      {/* Cumulative shape detail per level (counterTiers.ts) — the counter reads
+          as visibly fancier shop-to-shop, not just a recolor. */}
+      {tier.trim && (
+        <mesh position={[0, 0.72, 0.51 * s]}>
+          <boxGeometry args={[3.6 * s, 0.02, 0.01]} />
+          <meshStandardMaterial color={AMBAR} {...mat} />
+        </mesh>
+      )}
+      {tier.kickplate && (
+        <mesh position={[0, 0.02, 0.505 * s]}>
+          <boxGeometry args={[3.6 * s, 0.06, 0.02]} />
+          <meshStandardMaterial color={NOGUEIRA} {...mat} />
+        </mesh>
+      )}
+      {tier.cornerAccents &&
+        [-1.78 * s, 1.78 * s].map((x) => (
+          <mesh key={x} position={[x, 0.76, 0.48 * s]}>
+            <boxGeometry args={[0.06, 0.05, 0.06]} />
+            <meshStandardMaterial color={AMBAR} metalness={0.5} roughness={0.35} flatShading />
+          </mesh>
+        ))}
+      {tier.twoTonePanel && (
+        <mesh position={[0, 0.37, 0.51 * s]}>
+          <boxGeometry args={[1.6 * s, 0.5, 0.015]} />
+          <meshStandardMaterial color={CREME} {...mat} />
+        </mesh>
+      )}
+
+      {/* Ambient decor, same progression. Sits on TOP_Y like every other prop
+          here (PastryCase/Cloche/TipJar) — anything left at floor height
+          behind the counter is hidden from the camera by the counter's own
+          solid body, confirmed on-device (the tier-2 plant was invisible
+          until this moved it up). */}
+      {tier.plant && (
+        <mesh position={[1.6 * s, TOP_Y, -0.1]}>
+          <ModelParts data={tier.plant.model} scale={tier.plant.scale} />
+        </mesh>
+      )}
+      {tier.light && (
+        <mesh position={[0, 1.3, -0.35]}>
+          <ModelParts data={tier.light.model} scale={tier.light.scale} />
+        </mesh>
+      )}
+      {tier.wall && (
+        <mesh position={[-1.6 * s, 1.0, -0.4]}>
+          <ModelParts data={tier.wall.model} scale={tier.wall.scale} />
+        </mesh>
+      )}
 
       <PastryCase position={[-1.2 * s, TOP_Y, -0.2]} />
       <Cloche position={[1.1 * s, TOP_Y, -0.15]} />

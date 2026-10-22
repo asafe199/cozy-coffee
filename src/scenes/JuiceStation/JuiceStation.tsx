@@ -1,4 +1,6 @@
 import React, { useRef, useState } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { levelConfig } from '../../game/levels';
 import { useGameStore } from '../../state/gameStore';
 import { stationForItem } from '../../game/orders';
@@ -15,19 +17,40 @@ import type { FruitId, JuiceFlavor } from '../../game/types';
 
 const materialProps = { flatShading: true, roughness: 0.8, metalness: 0.05 } as const;
 
-// Two staggered rows of baskets behind the blender (5 + 4 = 9 ingredients),
-// each with its own small draggable fruit resting just in front of its basket.
-// Low-risk layout/tuning, per the design doc ("builder's call").
-const LAYOUT: { fruit: FruitId; basketX: number; basketZ: number; originX: number; originZ: number }[] = [
-  { fruit: 'orange', basketX: -1.0, basketZ: -0.4, originX: -1.0, originZ: -0.2 },
-  { fruit: 'lemon', basketX: -0.5, basketZ: -0.4, originX: -0.5, originZ: -0.2 },
-  { fruit: 'watermelon', basketX: 0, basketZ: -0.4, originX: 0, originZ: -0.2 },
-  { fruit: 'pineapple', basketX: 0.5, basketZ: -0.4, originX: 0.5, originZ: -0.2 },
-  { fruit: 'strawberry', basketX: 1.0, basketZ: -0.4, originX: 1.0, originZ: -0.2 },
-  { fruit: 'banana', basketX: -0.75, basketZ: -0.75, originX: -0.75, originZ: -0.55 },
-  { fruit: 'chocolate', basketX: -0.25, basketZ: -0.75, originX: -0.25, originZ: -0.55 },
-  { fruit: 'mango', basketX: 0.25, basketZ: -0.75, originX: 0.25, originZ: -0.55 },
-  { fruit: 'vanilla', basketX: 0.75, basketZ: -0.75, originX: 0.75, originZ: -0.55 },
+const BLENDER_POS: [number, number, number] = [APPLIANCE_ZONE.x, 0, -0.2];
+const BLENDER_SCALE = 0.8;
+// The jar sits on top of the motor base — roughly the top 55% of the model's
+// normalized height (1.0 * BLENDER_SCALE). Lid rests at the jar mouth; liquid
+// fills the jar body below it. Approximate (no separate lid/jar geometry
+// exists — BLENDER is one baked mesh), tune once seen on-device.
+const JAR_BASE_Y = 0.3 * BLENDER_SCALE;
+const JAR_TOP_Y = 0.68 * BLENDER_SCALE;
+const LID_Y = 0.72 * BLENDER_SCALE;
+const LID_LIFT_SECONDS = 0.4;
+// Baskets and fruit are sized for a phone touch target, not just readability —
+// bumped up from an earlier pass that looked fine on a desktop preview but
+// was too small to reliably grab on a real device.
+const BASKET_SCALE = 0.42;
+const FRUIT_SCALE = 0.2;
+
+// Two staggered rows filling the back of the counter, to the right of the
+// blender so nothing stands in front of them. Each basket's draggable fruit sits
+// just ahead of it, close enough to read as "take one from this bowl". Spacing
+// (0.5 between same-row baskets, 0.58 between rows) leaves a real gap around
+// each ~0.42m-wide basket instead of them touching edge-to-edge.
+const ROW_BACK = -0.9;
+const ROW_FRONT = -0.32;
+const FRUIT_GAP = 0.2;
+const LAYOUT: { fruit: FruitId; basketX: number; basketZ: number }[] = [
+  { fruit: 'orange', basketX: -0.75, basketZ: ROW_BACK },
+  { fruit: 'lemon', basketX: -0.25, basketZ: ROW_BACK },
+  { fruit: 'watermelon', basketX: 0.25, basketZ: ROW_BACK },
+  { fruit: 'pineapple', basketX: 0.75, basketZ: ROW_BACK },
+  { fruit: 'strawberry', basketX: 1.25, basketZ: ROW_BACK },
+  { fruit: 'banana', basketX: -0.5, basketZ: ROW_FRONT },
+  { fruit: 'chocolate', basketX: 0, basketZ: ROW_FRONT },
+  { fruit: 'mango', basketX: 0.5, basketZ: ROW_FRONT },
+  { fruit: 'vanilla', basketX: 1.0, basketZ: ROW_FRONT },
 ];
 
 const NEUTRAL_LIQUID_COLOR = '#8a7a5a';
@@ -53,12 +76,16 @@ function liquidColorFor(used: Set<FruitId>): string {
  * blender, always visible; each has its own tiny draggable fruit whose only
  * valid drop target is APPLIANCE_ZONE. Dropping a fruit there adds it to a
  * local Set (no undo, no limit — the set at the moment the blender is tapped
- * is what's locked in and used for review). Tapping the blender starts the
- * process (same startRef/Date.now() pattern as toast/pancakes); the glass is
- * a separate draggable that catches the pour visually while in
- * APPLIANCE_ZONE and processing is true, can detour through EXTRA_ZONE for
- * ice, and is sent on by dropping it on READY_ZONE — always accepted, blender
- * touched or not, ingredients right or wrong (never a dead end).
+ * is what's locked in and used for review). The jar's lid pops open and its
+ * level rises as soon as the first fruit lands, colored by whatever's
+ * actually in there (never the order's real flavor — a wrong guess should
+ * look wrong). Tapping the blender starts the process (same
+ * startRef/Date.now() pattern as toast/pancakes); the glass is a separate
+ * draggable that catches the pour visually while in APPLIANCE_ZONE and
+ * processing is true, can detour through EXTRA_ZONE for ice, and is sent on
+ * by dropping it on READY_ZONE — always accepted, blender touched or not,
+ * ingredients right or wrong (never a dead end). Station state (including
+ * the jar) resets the instant the glass reaches READY_ZONE.
  */
 export function JuiceStation() {
   const completeItem = useGameStore((state) => state.completeItem);
@@ -124,11 +151,43 @@ export function JuiceStation() {
               processMs: Date.now() - start,
             }
       );
+      // The station stays mounted until the fade finishes, so reset right away —
+      // the delivered glass shouldn't still look full if it's glimpsed mid-fade.
+      setBowl(new Set());
+      setProcessing(false);
+      setExtraAdded(false);
+      setCupZone(null);
+      startRef.current = null;
+      ingredientsUsedRef.current = null;
       startTransition(next);
     }
   };
 
-  const displayColor = liquidColorFor(ingredientsUsedRef.current ?? bowl);
+  const bowlForDisplay = ingredientsUsedRef.current ?? bowl;
+  const displayColor = liquidColorFor(bowlForDisplay);
+  // Jar fill reads as "most recipes use 1-2 ingredients" — 3 ingredients looks full,
+  // not just the rare 2-ingredient combos sitting at a meager 2/9.
+  const jarFill = Math.min(bowlForDisplay.size / 3, 1);
+
+  const lidRef = useRef<THREE.Mesh>(null);
+  const liquidRef = useRef<THREE.Mesh>(null);
+  const lidOpenRef = useRef(0);
+  useFrame((_state, delta) => {
+    const targetOpen = bowlForDisplay.size > 0 ? 1 : 0;
+    lidOpenRef.current += Math.sign(targetOpen - lidOpenRef.current) *
+      Math.min(Math.abs(targetOpen - lidOpenRef.current), delta / LID_LIFT_SECONDS);
+    const t = lidOpenRef.current;
+    if (lidRef.current) {
+      lidRef.current.position.set(BLENDER_POS[0] + 0.22 * t, LID_Y + 0.12 * t, BLENDER_POS[2] - 0.08 * t);
+      lidRef.current.rotation.z = t * 0.5;
+    }
+    if (liquidRef.current) {
+      const h = Math.max(jarFill, 0.001);
+      liquidRef.current.visible = jarFill > 0.01;
+      liquidRef.current.scale.y = h;
+      liquidRef.current.position.y = JAR_BASE_Y + ((JAR_TOP_Y - JAR_BASE_Y) * h) / 2;
+    }
+  });
 
   return (
     <group>
@@ -139,15 +198,30 @@ export function JuiceStation() {
       </mesh>
 
       {/* Blender (Kenney, CC0); tap it to start blending whatever's in the bowl so far. */}
-      <mesh position={[0, 0, -0.1]} onPointerDown={handleBlend}>
-        <ModelParts data={BLENDER} scale={0.8} />
+      <mesh position={BLENDER_POS} onPointerDown={handleBlend}>
+        <ModelParts data={BLENDER} scale={BLENDER_SCALE} />
       </mesh>
-      <Steam active={processing} position={[0, 0.35, -0.1]} />
+
+      {/* Level rising inside the jar as fruit goes in — no separate lid/jar geometry
+          exists on the baked BLENDER model, so this is a simple added cylinder, same
+          approach as the cup's own CoffeeLiquid. */}
+      <mesh ref={liquidRef} position={[BLENDER_POS[0], JAR_BASE_Y, BLENDER_POS[2]]} visible={false}>
+        <cylinderGeometry args={[0.13, 0.12, JAR_TOP_Y - JAR_BASE_Y, 14]} />
+        <meshStandardMaterial color={displayColor} roughness={0.3} />
+      </mesh>
+
+      {/* Lid: sits on the jar mouth, pops up and tilts aside once the first fruit goes in. */}
+      <mesh ref={lidRef} position={[BLENDER_POS[0], LID_Y, BLENDER_POS[2]]}>
+        <cylinderGeometry args={[0.145, 0.145, 0.03, 16]} />
+        <meshStandardMaterial color="#2a2a2a" {...materialProps} />
+      </mesh>
+
+      <Steam active={processing} position={[BLENDER_POS[0], 0.35, BLENDER_POS[2]]} />
 
       {/* 9 decorative ingredient baskets, always visible — never draggable. */}
       {LAYOUT.map(({ fruit, basketX, basketZ }) => (
         <mesh key={fruit} position={[basketX, 0, basketZ]}>
-          <ModelParts data={BASKET_MODELS[fruit]} scale={0.32} />
+          <ModelParts data={BASKET_MODELS[fruit]} scale={BASKET_SCALE} />
         </mesh>
       ))}
 
@@ -166,15 +240,15 @@ export function JuiceStation() {
       </group>
 
       {/* One small draggable fruit per ingredient; its only valid drop target is the blender. */}
-      {LAYOUT.map(({ fruit, originX, originZ }) => (
+      {LAYOUT.map(({ fruit, basketX, basketZ }) => (
         <CupDraggable
           key={fruit}
           onDroppedOn={handleFruitDropped(fruit)}
           zones={[APPLIANCE_ZONE]}
-          origin={{ x: originX, z: originZ }}
+          origin={{ x: basketX, z: basketZ + FRUIT_GAP }}
           y={0.03}
         >
-          <ModelParts data={FRUIT_MODELS[fruit]} scale={0.13} offsetY={-0.03} />
+          <ModelParts data={FRUIT_MODELS[fruit]} scale={FRUIT_SCALE} offsetY={-0.03} />
         </CupDraggable>
       ))}
 

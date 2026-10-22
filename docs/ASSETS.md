@@ -78,6 +78,24 @@ These are baked geometry only — the actual `JuiceStation` scene, the
 flavor/ingredient data model, and the drag-into-blender mechanic described in
 the design doc are not built yet.
 
+## Delivery counter decor tiers (pilot: table shape + decor per level)
+
+Baked into `src/scenes/shared/props/counterDecor.generated.ts`, wired per
+level via `src/scenes/DeliveryCounter/counterTiers.ts`. All CC0:
+
+- `DECOR_PLANT_SMALL` — "Plant" by Quaternius, https://poly.pizza/m/NrJN7UcglF
+- `DECOR_PLANT_MED` — "Houseplant" by Quaternius, https://poly.pizza/m/bfLOqIV5uP
+- `DECOR_PLANT_POTTED` — "Potted Plant" by CreativeTrio, https://poly.pizza/m/GJ3Bm5FDE4
+- `DECOR_PLANT_BIG` — "Plant Big" by Quaternius, https://poly.pizza/m/MbhbP7JrTI
+- `DECOR_LIGHT_CEILING` — "Light Ceiling" by Quaternius, https://poly.pizza/m/S3HkX8iTl2
+- `DECOR_CHANDELIER` — "Light Chandelier" by Quaternius, https://poly.pizza/m/q3k8I8YYX9
+- `DECOR_SHELF_SMALL` — "Shelf Small" by Quaternius, https://poly.pizza/m/TfdgUV2RYe
+- `DECOR_SHELF_LARGE` — "Shelf Large" by Quaternius, https://poly.pizza/m/3FmjkLClVE
+- `DECOR_MIRROR` — "Bathroom Mirror" by Kenney, https://poly.pizza/m/REpBXIXfO7 (used as generic wall decor, not literally a mirror — no reflective surface in this baked pipeline)
+
+Pilot station only (delivery counter) — same tier pattern planned for the
+other stations next, pending the user's go-ahead on how this one looks.
+
 ## Toast station bread variety
 
 Baked into `src/scenes/shared/props/toastVariety.generated.ts` — purely

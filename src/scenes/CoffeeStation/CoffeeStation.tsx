@@ -90,7 +90,11 @@ export function CoffeeStation() {
       {/* Coffee machine model (Kenney, CC0); tap it to pour once the cup is on
           MACHINE_ZONE. Its position is independent of the zone's z — the zone
           is the cup's snap target in front of the spout (see dropZones.ts). */}
-      <mesh position={[MACHINE_ZONE.x, 0, 0]} onPointerDown={handlePour}>
+      <mesh
+        position={[MACHINE_ZONE.x + (machineTier.offsetX ?? 0), 0, machineTier.offsetZ ?? 0]}
+        rotation={[0, machineTier.rotationY ?? 0, 0]}
+        onPointerDown={handlePour}
+      >
         <ModelParts data={machineTier.model} scale={machineTier.scale} />
       </mesh>
 
@@ -98,8 +102,8 @@ export function CoffeeStation() {
 
       {/* Sugar packet, offset beside SUGAR_ZONE's center so the snapped cup
           (which sits exactly at that center) doesn't visually swallow it. */}
-      <mesh position={[SUGAR_ZONE.x, 0.03, SUGAR_ZONE.z + 0.25]}>
-        <boxGeometry args={[0.14, 0.06, 0.1]} />
+      <mesh position={[SUGAR_ZONE.x, 0.045, SUGAR_ZONE.z + 0.25]}>
+        <boxGeometry args={[0.2, 0.09, 0.14]} />
         <meshStandardMaterial color={CREME} {...materialProps} />
       </mesh>
 
